@@ -8,6 +8,16 @@
   (with-open [r (io/reader filename)]
     (edn/read (java.io.PushbackReader. r))))
 
+(defn report-on [f team projects]
+  (let [[res-projects res-capacity] (f team projects)]
+    (println "Starting with")
+    (pprint projects)
+    (pprint team)
+    (println "Then")
+    (pprint res-projects)
+    (pprint res-capacity)
+    [res-projects res-capacity]))
+
 (defn -main [& args]
   (let [filename (or (first args)
                      "config.edn")
@@ -19,12 +29,5 @@
                   (- 1 (:unplanned const)))
         team (team-capacity (:contrib config)
                             (:profs config)
-                            points)
-        [res-projects res-capacity] (work-on team projects)]
-    (println "Starting with")
-    (pprint projects)
-    (pprint team)
-    (println "Then")
-    (pprint res-projects)
-    (pprint res-capacity)))
-
+                            points)]
+    (report-on work-on team projects)))
