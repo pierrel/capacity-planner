@@ -72,7 +72,13 @@
 (defn has-effort? [project]
   (some (partial < 0) (-> project :effort vals)))
 
-(defn has-capacity? [capacities]
+(defn have-effort? [projects]
+  (some has-effort? projects))
+
+(defn has-capacity? [capacity]
+  (< 0 (:capacity capacity)))
+
+(defn have-capacity? [capacities]
   (some (partial < 0) (map :capacity capacities)))
 
 (defn has-prof-available?
@@ -150,7 +156,7 @@
                                   unfinished-projects)
           next-project (first doable-projects)]
       (if (or (nil? next-project)
-              (-> rem-capacity has-capacity? not))
+              (-> rem-capacity have-capacity? not))
         [rem-projects rem-capacity]
         (let [[project cap-after-work] (work-on-project rem-capacity
                                                         next-project)]
@@ -158,5 +164,44 @@
                  (update-projects rem-projects project)
                  (conj excluded-proj-names (:name project))))))))
 
+(defn work-summary
+  [projects projects-after-work remaining-capacity]
+  (let [mirrored (partition 2 (interleave projects-after-work
+                                          projects))
+        progressed (filter has-effort?
+                           (map first
+                                (remove #(= (-> % first :effort)
+                                            (-> % last :effort))
+                                        mirrored)))
+        complete-projects (filter (complement has-effort?)
+                                  projects-after-work)]
+    {:completed (map :name complete-projects)
+     :progressed progressed
+     :remaining-capacity (filter has-capacity? remaining-capacity)}))
 
+(defn work-on-long
+  [contributions projects constants proficiencies]
+  "Works on projects each capacity in turn"
+  (let [points (* (:velocity constants)
+                  (:sprints constants)
+                  (- 1 (:unplanned constants)))]
+    (loop [rem-work projects
+           rem-contributions contributions
+           summaries []] ; {:complete [] :progress [] :remaining-capacity ()}
+      (let [capacity (team-capacity (first rem-contributions)
+                                    proficiencies
+                                    points)
+            results (work-on capacity rem-work)
+            [project-status cap-left-over] results
+            next-summaries (conj summaries
+                                 (work-summary rem-work
+                                               project-status
+                                               cap-left-over))
+            next-contribution (rest rem-contributions)]
+        (if (or (empty? next-contribution)
+                (not (have-effort? project-status)))
+          next-summaries
+          (recur (filter has-effort? project-status)
+                 next-contribution
+                 next-summaries))))))
 

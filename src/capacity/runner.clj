@@ -8,15 +8,10 @@
   (with-open [r (io/reader filename)]
     (edn/read (java.io.PushbackReader. r))))
 
-(defn report-on [f team projects]
-  (let [[res-projects res-capacity] (f team projects)]
-    (println "Starting with")
-    (pprint projects)
-    (pprint team)
-    (println "Then")
-    (pprint res-projects)
-    (pprint res-capacity)
-    [res-projects res-capacity]))
+(defn report-on [result]
+  (println "Completed: " (:completed result))
+  (println "Made progress on: " (map :name (:progressed result)))
+  (println "Left with capacity: " (:remaining-capacity result)))
 
 (defn -main [& args]
   (let [filename (or (first args)
@@ -24,10 +19,11 @@
         config (read-config filename)
         projects(:projects config)
         const (:constants config)
-        points (* (:velocity const)
-                  (:sprints const)
-                  (- 1 (:unplanned const)))
-        team (team-capacity (:contrib config)
-                            (:profs config)
-                            points)]
-    (report-on work-on team projects)))
+        results (work-on-long (:contrib config)
+                              projects
+                              const
+                              (:profs config))]
+    (doseq [[iter result] (partition 2 (interleave (rest (range)) results))]
+      (println "Iteration " iter)
+      (report-on result)
+      (println))))
