@@ -120,23 +120,17 @@
   2) Capacity is exhausted
   3) There is no more capacity for the given projects"
   [projects capacity]
-  (loop [rem-capacity        capacity
-         rem-projects        projects
-         excluded-proj-names #{}]
-    (let [unfinished-projects (filter has-effort? rem-projects)
-          doable-projects (remove #(-> (s/intersection excluded-proj-names
-                                                       #{(:name %)})
-                                       empty? not)
-                                  unfinished-projects)
-          next-project (first doable-projects)]
-      (if (or (nil? next-project)
-              (-> rem-capacity have-capacity? not))
-        [rem-projects rem-capacity]
+  (loop [rem-capacity      capacity
+         rem-projects      projects
+         finished-projects []]
+    (let [next-project (first rem-projects)]
+      (if (nil? next-project)
+        [finished-projects rem-capacity]
         (let [[project cap-after-work] (work-on-project next-project
                                                         rem-capacity)]
           (recur cap-after-work
-                 (update-projects rem-projects project)
-                 (conj excluded-proj-names (:name project))))))))
+                 (rest rem-projects)
+                 (conj finished-projects project)))))))
 
 (defn work-summary
   [projects projects-after-work remaining-capacity]
