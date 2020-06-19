@@ -3,17 +3,6 @@
             #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])))
 
-(t/deftest has-prof-avaialble?
-  (t/is (= false
-           (sut/has-prof-available? {:capacity 0 :profs #{:app}}
-                                    :app)))
-  (t/is (= false
-           (sut/has-prof-available? {:capacity 10 :profs #{:app}}
-                                    :ios)))
-  (t/is (= true
-           (sut/has-prof-available? {:capacity 1 :profs #{:app}}
-                                    :app))))
-
 (t/deftest update-capacity
   (let [capacity '({:name :pierre :capacity 10}
                    {:name :leo :capacity 3})]
@@ -59,7 +48,41 @@
                                         {:name :ernesto
                                          :capacity 10
                                          :profs #{:app :web}})
-                                  project)))))
+                                  project)))
+    (t/is (= [{:name "something else" :effort {:web 10 :app 5}}
+              '({:name :pierre, :capacity 0, :profs #{:app}}
+                {:name :jonathan, :capacity 0, :profs #{:app}}
+                {:name :leo, :capacity 3, :profs #{:ios}} )]
+             (sut/work-on-project
+              '({:name :pierre, :capacity 0, :profs #{ :app } }
+                { :name :jonathan, :capacity 5, :profs #{ :app } }
+                { :name :leo, :capacity 3, :profs #{ :ios } } )
+              {:name "something else" :effort {:web 10 :app 10}})))))
+
+(t/deftest work-on
+  (let [capacity '({:name :pierre :capacity 10 :profs #{:app}}
+                   {:name :jonathan :capacity 15 :profs #{:app}}
+                   {:name :leo :capacity 13 :profs #{:ios}})
+        projects '({:name "something" :effort {:ios 10 :app 20}}
+                    {:name "something else" :effort {:web 10 :app 10}})]
+    (t/is (= ['({:name "something", :effort {:ios 0, :app 0}}
+                {:name "something else", :effort {:web 10, :app 5}})
+              '({:name :pierre, :capacity 0, :profs #{:app}}
+                {:name :jonathan, :capacity 0, :profs #{:app}}
+                {:name :leo, :capacity 3, :profs #{:ios}})]
+             (sut/work-on capacity projects)))))
+
+(t/deftest has-prof-avaialble?
+  (t/is (= false
+           (sut/has-prof-available? {:capacity 0 :profs #{:app}}
+                                    :app)))
+  (t/is (= false
+           (sut/has-prof-available? {:capacity 10 :profs #{:app}}
+                                    :ios)))
+  (t/is (= true
+           (sut/has-prof-available? {:capacity 1 :profs #{:app}}
+                                    :app))))
+
 
 (t/deftest update-capacities
   (t/is (= '({:name :pierre :capacity 10}

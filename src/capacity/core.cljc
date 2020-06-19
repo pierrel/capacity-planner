@@ -118,12 +118,16 @@
   [capacity project]
   (loop [rem-efforts (to-simple-effort (:effort project))
          rem-capacity (sort-by #(-> % :profs count) < capacity)]
-    (let [pos-effort (filter (fn [[_ effort]] (< 0 effort)) rem-efforts)
-          tech-effort (first pos-effort)
+    (let [pos-doable-efforts (filter (fn [[tech effort]]
+                                       (and (< 0 effort)
+                                            (some #(has-prof-available?
+                                                    %
+                                                    tech)
+                                                  rem-capacity)))
+                                     rem-efforts)
+          tech-effort (first pos-doable-efforts)
           [tech effort] tech-effort]
-      (if (or (nil? tech-effort) ; Nothing left to do
-              (empty? (filter #(has-prof-available? % tech)
-                              rem-capacity))) ; no one left
+      (if (nil? tech-effort) ; Nothing left to do or nobody left to do it
         [(reduce (fn [proj [tech effort]]
                    (update-project proj tech effort))
                  project
@@ -136,7 +140,6 @@
                                        tech
                                        rem-effort-num)
                  cap-after-work))))))
-
 
 (defn work-on
   "Returns [projects' status, remaining capacity] working on projects.
