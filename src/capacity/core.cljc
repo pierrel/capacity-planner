@@ -87,7 +87,6 @@
              0]))
         [rem-capacity rem-points]))))
 
-
 (defn work-on-project
   "Returns the remaining project effort and capacity.
 
