@@ -94,23 +94,16 @@
   Capacities are re-ordered to prefer using lower numbers of
   proficiencies first."
   [project capacity]
-  (loop [rem-effort (:effort project)
-         rem-capacity (sort-by #(-> % :profs count) < capacity)
-         left-effort ()]
-    (let [seffort (first rem-effort)]
-      (if (nil? seffort)
-        [(reduce (fn [proj seffort]
-                   (update-effort proj seffort))
-                 project
-                 left-effort)
-         (update-capacities capacity rem-capacity)]
-        (let [[tech points] seffort
-              [cap-after-work rem-points] (work-on-tech rem-capacity
-                                                        tech
-                                                        points)]
-          (recur (rest rem-effort)
-                 cap-after-work
-                 (cons [tech rem-points] left-effort)))))))
+  (let [[rem-effort rem-capacity]
+        (reduce (fn [[effort capacity] [tech points]]
+                  (let [[rem-capacity rem-points] (work-on-tech capacity
+                                                                tech
+                                                                points)]
+                    [(assoc effort tech rem-points) rem-capacity]))
+                [{} (sort-by #(-> % :profs count) capacity)]
+                (:effort project))]
+    [(update-effort project rem-effort)
+     (update-capacities capacity rem-capacity)]))
 
 (defn work-on
   "Returns [projects' status, remaining capacity] working on projects."
