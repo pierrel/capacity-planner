@@ -1,6 +1,6 @@
 (ns capacity.core-test
   (:require [capacity.core :as sut]
-            [capacity.utils :as utils]
+            [capacity.config :as config]
             #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])))
 
@@ -74,7 +74,7 @@
              (sut/work-on capacity projects)))))
 
 (t/deftest work-on-long
-  (let [config (utils/read-config "test/resources/test-config.edn")
+  (let [config (config/read "test/resources/test-config.edn")
         projects(:projects config)
         const (:constants config)]
     (t/is (= [{:completed '("Dynamic FCap" "Online Events Attribution"),
