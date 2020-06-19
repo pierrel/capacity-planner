@@ -50,16 +50,12 @@
           %)
        capacities))
 
-(defn update-project
-  "Updates the project with a new effort for given tech."
-  [project tech effort]
-  (let [old-tech-effort (:effort project)
-        new-tech-effort (assoc old-tech-effort
-                               tech
-                               effort)]
-    (assoc project
-           :effort
-           new-tech-effort)))
+(defn update-effort
+  "Updates the project with a new effort."
+  [project effort]
+  (merge-with merge
+              project
+              {:effort effort}))
 
 (defn update-projects
   "Replaces project of the same name with the new project."
@@ -116,13 +112,13 @@
   Capacities are re-ordered to prefer using lower numbers of
   proficiencies first."
   [capacity project]
-  (loop [rem-efforts (to-simple-effort (:effort project))
+  (loop [rem-efforts (:effort project)
          rem-capacity (sort-by #(-> % :profs count) < capacity)
          left-efforts ()]
     (let [[tech effort] (first rem-efforts)]
       (if (nil? tech)
-        [(reduce (fn [proj [tech effort]]
-                   (update-project proj tech effort))
+        [(reduce (fn [proj effort]
+                   (update-project proj effort))
                  project
                  left-efforts)
          (update-capacities capacity rem-capacity)]

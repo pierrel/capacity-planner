@@ -143,13 +143,14 @@
   (t/is (= nil
            (sut/has-effort? {:effort {:app 0 :web 0}}))))
 
-(t/deftest update-project
+(t/deftest update-effort
   (t/is (= {:effort {:app 25
-                     :ios 15}}
-           (sut/update-project {:effort {:app 10
-                                         :ios 15}}
-                               :app
-                               25))))
+                     :ios 15}
+            :name "whatever"}
+           (sut/update-effort {:effort {:app 10
+                                         :ios 15}
+                                :name "whatever"}
+                               {:app 25}))))
 
 (t/deftest update-projects
   (t/is (= '({:name "something" :effort {:app 2 :ios 5}}
