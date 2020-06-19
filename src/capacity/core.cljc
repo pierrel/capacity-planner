@@ -117,29 +117,21 @@
   proficiencies first."
   [capacity project]
   (loop [rem-efforts (to-simple-effort (:effort project))
-         rem-capacity (sort-by #(-> % :profs count) < capacity)]
-    (let [pos-doable-efforts (filter (fn [[tech effort]]
-                                       (and (< 0 effort)
-                                            (some #(has-prof-available?
-                                                    %
-                                                    tech)
-                                                  rem-capacity)))
-                                     rem-efforts)
-          tech-effort (first pos-doable-efforts)
-          [tech effort] tech-effort]
-      (if (nil? tech-effort) ; Nothing left to do or nobody left to do it
+         rem-capacity (sort-by #(-> % :profs count) < capacity)
+         left-efforts ()]
+    (let [[tech effort] (first rem-efforts)]
+      (if (nil? tech)
         [(reduce (fn [proj [tech effort]]
                    (update-project proj tech effort))
                  project
-                 rem-efforts)
+                 left-efforts)
          (update-capacities capacity rem-capacity)]
         (let [[rem-effort-num cap-after-work] (work-on-tech rem-capacity
                                                             tech
                                                             effort)]
-          (recur (update-simple-effort rem-efforts
-                                       tech
-                                       rem-effort-num)
-                 cap-after-work))))))
+          (recur (rest rem-efforts)
+                 cap-after-work
+                 (cons [tech rem-effort-num] left-efforts)))))))
 
 (defn work-on
   "Returns [projects' status, remaining capacity] working on projects.
