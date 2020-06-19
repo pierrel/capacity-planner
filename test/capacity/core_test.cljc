@@ -17,17 +17,20 @@
   (let [capacity '({:name :pierre :capacity 10 :profs #{:app}}
                    {:name :jonathan :capacity 15 :profs #{:app}}
                    {:name :leo :capacity 13 :profs #{:ios}})]
-    (t/is (= [0 '({:name :pierre :capacity 10 :profs #{:app}}
-                  {:name :jonathan :capacity 15 :profs #{:app}}
-                  {:name :leo :capacity 3 :profs #{:ios}})]
+    (t/is (= ['({:name :pierre :capacity 10 :profs #{:app}}
+                {:name :jonathan :capacity 15 :profs #{:app}}
+                {:name :leo :capacity 3 :profs #{:ios}})
+              0]
              (sut/work-on-tech capacity :ios 10)))
-    (t/is (= [3 '({:name :pierre :capacity 10 :profs #{:app}}
-                  {:name :jonathan :capacity 15 :profs #{:app}}
-                  {:name :leo :capacity 0 :profs #{:ios}})]
+    (t/is (= ['({:name :pierre :capacity 10 :profs #{:app}}
+                {:name :jonathan :capacity 15 :profs #{:app}}
+                {:name :leo :capacity 0 :profs #{:ios}})
+              3]
              (sut/work-on-tech capacity :ios 16)))
-    (t/is (= [0 '({:name :pierre :capacity 0 :profs #{:app}}
-                  {:name :jonathan :capacity 3 :profs #{:app}}
-                  {:name :leo :capacity 13 :profs #{:ios}})]
+    (t/is (= ['({:name :pierre :capacity 0 :profs #{:app}}
+                {:name :jonathan :capacity 3 :profs #{:app}}
+                {:name :leo :capacity 13 :profs #{:ios}})
+              0]
              (sut/work-on-tech capacity :app 22)))))
 
 (t/deftest work-on-project
@@ -39,26 +42,26 @@
               '({:name :pierre :capacity 0 :profs #{:app}}
                 {:name :jonathan :capacity 5 :profs #{:app}}
                 {:name :leo :capacity 3 :profs #{:ios}})]
-             (sut/work-on-project capacity project)))
+             (sut/work-on-project project capacity)))
     (t/is (= [{:name "something" :effort {:ios 0 :app 0}}
               '({:name :ernesto :capacity 10 :profs #{:app :web}}
                 {:name :pierre :capacity 0 :profs #{:app}}
                 {:name :jonathan :capacity 5 :profs #{:app}}
                 {:name :leo :capacity 3 :profs #{:ios}})]
-             (sut/work-on-project (conj capacity
+             (sut/work-on-project project
+                                  (conj capacity
                                         {:name :ernesto
                                          :capacity 10
-                                         :profs #{:app :web}})
-                                  project)))
+                                         :profs #{:app :web}}))))
     (t/is (= [{:name "something else" :effort {:web 10 :app 5}}
               '({:name :pierre, :capacity 0, :profs #{:app}}
                 {:name :jonathan, :capacity 0, :profs #{:app}}
                 {:name :leo, :capacity 3, :profs #{:ios}} )]
              (sut/work-on-project
+              {:name "something else" :effort {:web 10 :app 10}}
               '({:name :pierre, :capacity 0, :profs #{ :app } }
                 { :name :jonathan, :capacity 5, :profs #{ :app } }
-                { :name :leo, :capacity 3, :profs #{ :ios } } )
-              {:name "something else" :effort {:web 10 :app 10}})))))
+                { :name :leo, :capacity 3, :profs #{ :ios } } ))))))
 
 (t/deftest work-on
   (let [capacity '({:name :pierre :capacity 10 :profs #{:app}}
@@ -71,7 +74,7 @@
               '({:name :pierre, :capacity 0, :profs #{:app}}
                 {:name :jonathan, :capacity 0, :profs #{:app}}
                 {:name :leo, :capacity 3, :profs #{:ios}})]
-             (sut/work-on capacity projects)))))
+             (sut/work-on projects capacity)))))
 
 (t/deftest work-on-long
   (let [config (config/read "test/resources/test-config.edn")

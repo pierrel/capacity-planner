@@ -93,7 +93,7 @@
 
   Capacities are re-ordered to prefer using lower numbers of
   proficiencies first."
-  [capacity project]
+  [project capacity]
   (loop [rem-effort (:effort project)
          rem-capacity (sort-by #(-> % :profs count) < capacity)
          left-effort ()]
@@ -119,7 +119,7 @@
   1) Projects are finished
   2) Capacity is exhausted
   3) There is no more capacity for the given projects"
-  [capacity projects]
+  [projects capacity]
   (loop [rem-capacity        capacity
          rem-projects        projects
          excluded-proj-names #{}]
@@ -132,8 +132,8 @@
       (if (or (nil? next-project)
               (-> rem-capacity have-capacity? not))
         [rem-projects rem-capacity]
-        (let [[project cap-after-work] (work-on-project rem-capacity
-                                                        next-project)]
+        (let [[project cap-after-work] (work-on-project next-project
+                                                        rem-capacity)]
           (recur cap-after-work
                  (update-projects rem-projects project)
                  (conj excluded-proj-names (:name project))))))))
@@ -165,7 +165,7 @@
       (let [capacity (team-capacity (first rem-contributions)
                                     proficiencies
                                     points)
-            results (work-on capacity rem-work)
+            results (work-on rem-work capacity)
             [project-status cap-left-over] results
             next-summaries (conj summaries
                                  (work-summary rem-work
