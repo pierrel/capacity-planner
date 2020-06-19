@@ -154,7 +154,7 @@
      :remaining-capacity (filter has-capacity? remaining-capacity)}))
 
 (defn work-on-long
-  [contributions projects constants proficiencies]
+  [projects contributions constants proficiencies]
   "Works on projects each capacity in turn"
   (let [points (* (:velocity constants)
                   (:sprints constants)

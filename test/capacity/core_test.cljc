@@ -114,10 +114,10 @@
              {:name :jordan, :profs #{:app :web}, :capacity 25.5}
              {:name :john, :profs #{:android :app}, :capacity 20.25}
              {:name :jimmy, :profs #{:ios :app}, :capacity 20.400000000000002})}]
-             (sut/work-on-long (:contrib config)
-                           projects
-                           const
-                           (:profs config))))))
+             (sut/work-on-long projects
+                               (:contrib config)
+                               const
+                               (:profs config))))))
 
 
 (t/deftest has-prof-avaialble?

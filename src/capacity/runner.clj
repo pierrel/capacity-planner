@@ -12,8 +12,8 @@
   (let [conf     (config/read filename)
         projects (:projects conf)
         const    (:constants conf)
-        results  (work-on-long (:contrib conf)
-                               projects
+        results  (work-on-long projects
+                               (:contrib conf)
                                const
                                (:profs conf))]
     (doseq [[iter result] (partition 2 (interleave (rest (range)) results))]
