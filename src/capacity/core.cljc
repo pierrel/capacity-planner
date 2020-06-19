@@ -39,25 +39,11 @@
               project
               {:effort effort}))
 
-(defn update-projects
-  "Replaces project of the same name with the new project."
-  [orig-projects new-project]
-  (utils/replace-with (fn [np op]
-                        (apply = (map :name [np op])))
-                      orig-projects
-                      new-project))
-
 (defn has-effort? [project]
   (some (partial < 0) (-> project :effort vals)))
 
-(defn have-effort? [projects]
-  (some has-effort? projects))
-
 (defn has-capacity? [capacity]
   (< 0 (:capacity capacity)))
-
-(defn have-capacity? [capacities]
-  (some (partial < 0) (map :capacity capacities)))
 
 (defn has-prof-available?
   "Returns true if the engineer has the proficiency and positive capacity."
