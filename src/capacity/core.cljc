@@ -11,24 +11,6 @@
           :capacity (* points (get contrib person))})
        (remove #(= 0 (last %)) contrib)))
 
-(defn- to-simple-effort
-  "Returns an easier-to-work with effort like ([:app 10] [:ios 15])"
-  [proj-effort]
-  (map vec proj-effort))
-
-(defn- from-simple-effort
-  "Takes a simple effort and returns the project effort map"
-  [simple-effort]
-  (reduce (fn [acc [k v]]
-            (assoc acc k v))
-          {}
-          simple-effort))
-
-(defn- update-simple-effort
-  [simple-effort tech effort]
-  (conj (remove #(= tech (first %)) simple-effort)
-        [tech effort]))
-
 (defn update-capacities
   "Takes all the capacities in `new` and updates them in `original`.
 
