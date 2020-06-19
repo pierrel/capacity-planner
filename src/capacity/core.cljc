@@ -113,24 +113,15 @@
                  (cons [tech rem-points] left-effort)))))))
 
 (defn work-on
-  "Returns [projects' status, remaining capacity] working on projects.
-
-  Finishes when either:
-  1) Projects are finished
-  2) Capacity is exhausted
-  3) There is no more capacity for the given projects"
+  "Returns [projects' status, remaining capacity] working on projects."
   [projects capacity]
-  (loop [rem-capacity      capacity
-         rem-projects      projects
-         finished-projects []]
-    (let [next-project (first rem-projects)]
-      (if (nil? next-project)
-        [finished-projects rem-capacity]
-        (let [[project cap-after-work] (work-on-project next-project
-                                                        rem-capacity)]
-          (recur cap-after-work
-                 (rest rem-projects)
-                 (conj finished-projects project)))))))
+  (reduce (fn [[projects capacity] project-todo]
+            (let [[rem-project rem-capacity] (work-on-project project-todo
+                                                              capacity)]
+              [(conj projects rem-project)
+               rem-capacity]))
+          [[] capacity]
+          projects))
 
 (defn work-summary
   [projects projects-after-work remaining-capacity]
