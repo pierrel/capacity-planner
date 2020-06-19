@@ -13,6 +13,18 @@
     (t/is (= capacity
              (sut/update-capacity capacity :noone 10)))))
 
+(t/deftest eng-work-on
+  (t/is (= [{:capacity 5} 0]
+           (sut/eng-work-on {:capacity 10} 5)))
+  (t/is (= [{:capacity 0} 30]
+           (sut/eng-work-on {:capacity 20} 50)))
+  (t/is (= [{:capacity 0} 0]
+           (sut/eng-work-on {:capacity 2} 2)))
+  (t/is (= [{:capacity 0} 10]
+           (sut/eng-work-on {:capacity 0} 10)))
+  (t/is (= [{:capacity 10} 0]
+           (sut/eng-work-on {:capacity 10} 0))))
+
 (t/deftest work-on-tech
   (let [capacity '({:name :pierre :capacity 10 :profs #{:app}}
                    {:name :jonathan :capacity 15 :profs #{:app}}

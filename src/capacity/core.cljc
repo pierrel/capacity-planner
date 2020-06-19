@@ -65,27 +65,26 @@
   (and (< 0 (:capacity eng-cap))
        (not (empty? (s/intersection #{tech} (:profs eng-cap))))))
 
+(defn eng-work-on
+  [eng points]
+  (let [cap (:capacity eng)]
+    (if (> points cap)
+      [(assoc eng :capacity 0) (- points cap)]
+      [(assoc eng :capacity (- cap points)) 0])))
+
 (defn work-on-tech
   "Returns [remaining capacity, remaining points]."
   [capacity tech points]
-  (loop [rem-points points
-         rem-capacity capacity]
-    (let [avail-cap (filter #(has-prof-available? % tech)
-                            rem-capacity)
-          cur-worker (first avail-cap)]
-      (if cur-worker
-        (let [cap (:capacity cur-worker)
-              cap-left (- cap rem-points)]
-          (if (>= 0 cap-left)
-            (recur (- rem-points (:capacity cur-worker))
-                   (update-capacity rem-capacity
-                                    (:name cur-worker)
-                                    0))
-            [(update-capacity rem-capacity
-                              (:name cur-worker)
-                              cap-left)
-             0]))
-        [rem-capacity rem-points]))))
+  (reduce (fn [[rem-capacity rem-points] eng]
+            (if (= 0 rem-points)
+              [rem-capacity rem-points]
+              (let [[worked-eng worked-points] (eng-work-on eng rem-points)]
+                [(update-capacity rem-capacity
+                                  (:name worked-eng)
+                                  (:capacity worked-eng))
+                 worked-points])))
+          [capacity points]
+          (filter #(has-prof-available? % tech) capacity)))
 
 (defn work-on-project
   "Returns the remaining project effort and capacity.
