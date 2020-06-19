@@ -76,13 +76,11 @@
   "Returns [remaining capacity, remaining points]."
   [capacity tech points]
   (reduce (fn [[rem-capacity rem-points] eng]
-            (if (= 0 rem-points)
-              [rem-capacity rem-points]
-              (let [[worked-eng worked-points] (eng-work-on eng rem-points)]
-                [(update-capacity rem-capacity
-                                  (:name worked-eng)
-                                  (:capacity worked-eng))
-                 worked-points])))
+            (let [[worked-eng worked-points] (eng-work-on eng rem-points)]
+              [(update-capacity rem-capacity
+                                (:name worked-eng)
+                                (:capacity worked-eng))
+               worked-points]))
           [capacity points]
           (filter #(has-prof-available? % tech) capacity)))
 
@@ -135,23 +133,15 @@
   (let [points (* (:velocity constants)
                   (:sprints constants)
                   (- 1 (:unplanned constants)))]
-    (loop [rem-work projects
-           rem-contributions contributions
-           summaries []] ; {:complete [] :progress [] :remaining-capacity ()}
-      (let [capacity (team-capacity (first rem-contributions)
-                                    proficiencies
-                                    points)
-            results (work-on rem-work capacity)
-            [project-status cap-left-over] results
-            next-summaries (conj summaries
-                                 (work-summary rem-work
-                                               project-status
-                                               cap-left-over))
-            next-contribution (rest rem-contributions)]
-        (if (or (empty? next-contribution)
-                (not (have-effort? project-status)))
-          next-summaries
-          (recur (filter has-effort? project-status)
-                 next-contribution
-                 next-summaries))))))
+    (first (reduce (fn [[summary projects] capacity]
+                     (let [[rem-projects rem-capacity]
+                           (work-on projects capacity)]
+                       [(conj summary
+                              (work-summary projects rem-projects rem-capacity))
+                        (filter has-effort? rem-projects)]))
+                   [[] projects]
+                   (map #(team-capacity %
+                                        proficiencies
+                                        points)
+                        contributions)))))
 
