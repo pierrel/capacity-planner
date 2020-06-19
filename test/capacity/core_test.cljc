@@ -1,5 +1,6 @@
 (ns capacity.core-test
   (:require [capacity.core :as sut]
+            [capacity.utils :as utils]
             #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])))
 
@@ -71,6 +72,50 @@
                 {:name :jonathan, :capacity 0, :profs #{:app}}
                 {:name :leo, :capacity 3, :profs #{:ios}})]
              (sut/work-on capacity projects)))))
+
+(t/deftest work-on-long
+  (let [config (utils/read-config "test/resources/test-config.edn")
+        projects(:projects config)
+        const (:constants config)]
+    (t/is (= [{:completed '("Dynamic FCap" "Online Events Attribution"),
+            :progressed
+            '({:name "A11y", :effort {:web 3.0500000000000007}}
+             {:name "Objectives", :effort {:web 4, :app 0}}
+             {:name "Editability", :effort {:ios 0, :android 0, :app 0, :web 3}}
+             {:name "Test leads", :effort {:app 10.599999999999998}}),
+            :remaining-capacity ()}
+           {:completed
+            '("A11y"
+             "Objectives"
+             "Editability"
+             "Test leads"
+             "TextViewModel migration"
+             "SSCS"),
+            :progressed
+            '({:name "C2M",
+              :effort {:ios 0, :android 0, :web 0, :app 14.049999999999997}}),
+            :remaining-capacity ()}
+           {:completed '("C2M" "Deprecate Custom Senders" "Sender Identity"),
+            :progressed
+            '({:name "Human handoff",
+              :effort {:app 0, :web 29.599999999999998, :android 5.25, :ios 0}}),
+            :remaining-capacity
+            '({:name :jimmy, :profs #{:ios :app}, :capacity 10.400000000000002})}
+           {:completed '("Human handoff"),
+            :progressed (),
+            :remaining-capacity
+            '({:name :jeff, :profs #{:ios :app}, :capacity 25.5}
+             {:name :kent, :profs #{:app}, :capacity 25.5}
+             {:name :cathy, :profs #{:app :data}, :capacity 25.5}
+             {:name :eric, :profs #{:app :web}, :capacity 18.85}
+             {:name :jordan, :profs #{:app :web}, :capacity 25.5}
+             {:name :john, :profs #{:android :app}, :capacity 20.25}
+             {:name :jimmy, :profs #{:ios :app}, :capacity 20.400000000000002})}]
+             (sut/work-on-long (:contrib config)
+                           projects
+                           const
+                           (:profs config))))))
+
 
 (t/deftest has-prof-avaialble?
   (t/is (= false

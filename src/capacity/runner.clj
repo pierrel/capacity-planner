@@ -1,29 +1,28 @@
 (ns capacity.runner
-  (:require [clojure.java.io :as io]
-            [clojure.edn :as edn])
+  (:require [capacity.config :as config])
   (:use [capacity.core]
         [clojure.pprint]))
-
-(defn read-config [filename]
-  (with-open [r (io/reader filename)]
-    (edn/read (java.io.PushbackReader. r))))
 
 (defn report-on [result]
   (println "Completed: " (:completed result))
   (println "Made progress on: " (map :name (:progressed result)))
   (println "Left with capacity: " (:remaining-capacity result)))
 
-(defn -main [& args]
-  (let [filename (or (first args)
-                     "config.edn")
-        config (read-config filename)
-        projects(:projects config)
-        const (:constants config)
-        results (work-on-long (:contrib config)
-                              projects
-                              const
-                              (:profs config))]
+(defn run-and-report [filename]
+  (let [conf     (config/read filename)
+        projects (:projects conf)
+        const    (:constants conf)
+        results  (work-on-long (:contrib conf)
+                               projects
+                               const
+                               (:profs conf))]
     (doseq [[iter result] (partition 2 (interleave (rest (range)) results))]
       (println "Iteration " iter)
       (report-on result)
-      (println))))
+      (println))
+    results))
+
+(defn -main [& args]
+  (run-and-report  (or (first args)
+                       "config.edn")))
+
