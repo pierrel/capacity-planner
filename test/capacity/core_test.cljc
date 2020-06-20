@@ -166,13 +166,3 @@
                                          :ios 15}
                                 :name "whatever"}
                                {:app 25}))))
-
-(t/deftest update-projects
-  (t/is (= '({:name "something" :effort {:app 2 :ios 5}}
-             {:name "else" :effort {:app 25 :ios 10}})
-           (sut/update-projects '({:name "something" :effort {:app 12
-                                                              :ios 15}}
-                                  {:name "else" :effort {:app 25
-                                                         :ios 10}})
-                                {:name "something" :effort {:app 2
-                                                            :ios 5}}))))
