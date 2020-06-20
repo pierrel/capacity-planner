@@ -104,8 +104,7 @@
                                           projects))
         progressed (filter has-effort?
                            (map first
-                                (remove #(= (-> % first :effort)
-                                            (-> % last :effort))
+                                (remove #(apply = (map :effort %))
                                         mirrored)))
         complete-projects (filter (complement has-effort?)
                                   projects-after-work)]
