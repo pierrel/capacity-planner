@@ -11,19 +11,6 @@
           :capacity (* points (get contrib person))})
        (remove #(= 0 (last %)) contrib)))
 
-(defn update-capacities
-  "Takes all the capacities in `new` and updates them in `original`.
-
-  Because we may need to re-order capacities, this allows us to maintain
-  order before returning."
-  [original new]
-  (map (fn [orig]
-         (if-let [new-matching (first (filter #(= (:name %) (:name orig))
-                                              new))]
-           (assoc orig :capacity (:capacity new-matching))
-           orig))
-       original))
-
 (defn update-capacity
   "Takes a `capacities` list of capacity and updates it with `updated`."
   [capacities name new-cap]
@@ -85,7 +72,7 @@
                 [{} (sort-by #(-> % :profs count) capacity)]
                 (:effort project))]
     [(update-effort project rem-effort)
-     (update-capacities capacity rem-capacity)]))
+     (utils/sort-like capacity :name rem-capacity)]))
 
 (defn work-on
   "Returns [projects' status, remaining capacity] working on projects."
