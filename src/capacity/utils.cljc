@@ -7,3 +7,14 @@
           e
           %)
        coll))
+
+(defn sort-like
+  "Returns `unordered` sorted like `example` by `unique-key`"
+  [example unique-key unordered]
+  (let [lookup (reduce #(assoc %1
+                               (-> %2 last unique-key)
+                               (first %2))
+                       {}
+                       (partition 2 (interleave (range) example)))]
+    (sort-by (comp lookup unique-key)
+             unordered)))
