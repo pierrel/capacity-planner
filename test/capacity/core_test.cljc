@@ -4,14 +4,14 @@
             #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])))
 
-(t/deftest update-capacity
+(t/deftest update-teammate-capacity
   (let [capacity '({:name :pierre :capacity 10}
                    {:name :leo :capacity 3})]
     (t/is (= '({:name :pierre :capacity 4}
                {:name :leo :capacity 3})
-             (sut/update-capacity capacity :pierre 4)))
+             (sut/update-teammate-capacity capacity :pierre 4)))
     (t/is (= capacity
-             (sut/update-capacity capacity :noone 10)))))
+             (sut/update-teammate-capacity capacity :noone 10)))))
 
 (t/deftest eng-work-on
   (t/is (= [{:capacity 5} 0]
@@ -25,7 +25,7 @@
   (t/is (= [{:capacity 10} 0]
            (sut/eng-work-on {:capacity 10} 0))))
 
-(t/deftest work-on-tech
+(t/deftest team-work-on-tech
   (let [capacity '({:name :pierre :capacity 10 :profs #{:app}}
                    {:name :jonathan :capacity 15 :profs #{:app}}
                    {:name :leo :capacity 13 :profs #{:ios}})]
@@ -33,17 +33,17 @@
                 {:name :jonathan :capacity 15 :profs #{:app}}
                 {:name :leo :capacity 3 :profs #{:ios}})
               0]
-             (sut/work-on-tech capacity :ios 10)))
+             (sut/team-work-on-tech capacity :ios 10)))
     (t/is (= ['({:name :pierre :capacity 10 :profs #{:app}}
                 {:name :jonathan :capacity 15 :profs #{:app}}
                 {:name :leo :capacity 0 :profs #{:ios}})
               3]
-             (sut/work-on-tech capacity :ios 16)))
+             (sut/team-work-on-tech capacity :ios 16)))
     (t/is (= ['({:name :pierre :capacity 0 :profs #{:app}}
                 {:name :jonathan :capacity 3 :profs #{:app}}
                 {:name :leo :capacity 13 :profs #{:ios}})
               0]
-             (sut/work-on-tech capacity :app 22)))))
+             (sut/team-work-on-tech capacity :app 22)))))
 
 (t/deftest work-on-project
   (let [capacity '({:name :pierre :capacity 10 :profs #{:app}}
@@ -98,7 +98,7 @@
              {:name "Objectives", :effort {:web 4, :app 0}}
              {:name "Editability", :effort {:ios 0, :android 0, :app 0, :web 3}}
              {:name "Test leads", :effort {:app 10.599999999999998}}),
-            :remaining-capacity ()}
+            :remaining-team ()}
            {:completed
             '("A11y"
              "Objectives"
@@ -109,16 +109,16 @@
             :progressed
             '({:name "C2M",
               :effort {:ios 0, :android 0, :web 0, :app 14.049999999999997}}),
-            :remaining-capacity ()}
+            :remaining-team ()}
            {:completed '("C2M" "Deprecate Custom Senders" "Sender Identity"),
             :progressed
             '({:name "Human handoff",
               :effort {:app 0, :web 29.599999999999998, :android 5.25, :ios 0}}),
-            :remaining-capacity
+            :remaining-team
             '({:name :jimmy, :profs #{:ios :app}, :capacity 10.400000000000002})}
            {:completed '("Human handoff"),
             :progressed (),
-            :remaining-capacity
+            :remaining-team
             '({:name :jeff, :profs #{:ios :app}, :capacity 25.5}
              {:name :kent, :profs #{:app}, :capacity 25.5}
              {:name :cathy, :profs #{:app :data}, :capacity 25.5}
@@ -131,7 +131,6 @@
                                const
                                (:profs config))))))
 
-
 (t/deftest has-prof-avaialble?
   (t/is (= false
            (sut/has-prof-available? {:capacity 0 :profs #{:app}}
@@ -142,15 +141,6 @@
   (t/is (= true
            (sut/has-prof-available? {:capacity 1 :profs #{:app}}
                                     :app))))
-
-
-(t/deftest update-capacities
-  (t/is (= '({:name :pierre :capacity 10}
-             {:name :leo :capacity 5})
-           (sut/update-capacities '({:name :pierre :capacity 5}
-                                    {:name :leo :capacity 3})
-                                  '({:name :leo :capacity 5}
-                                    {:name :pierre :capacity 10})))))
 
 (t/deftest has-effort?
   (t/is (= true

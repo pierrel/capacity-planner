@@ -6,7 +6,7 @@
 (defn report-on [result]
   (println "Completed: " (:completed result))
   (println "Made progress on: " (map :name (:progressed result)))
-  (println "Left with capacity: " (:remaining-capacity result)))
+  (println "Left with capacity: " (:remaining-team result)))
 
 (defn run-and-report [filename]
   (let [conf     (config/read filename)
