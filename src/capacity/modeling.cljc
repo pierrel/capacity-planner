@@ -49,4 +49,3 @@
       [(assoc eng :capacity rem-capacity)
        (merge-with merge proj {:effort rem-effort})])))
 
-(defn )
