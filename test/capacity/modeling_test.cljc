@@ -73,7 +73,7 @@
         jan (sut/Eng. :jan #{:web :app} 5)
         paul (sut/Eng. :paul #{:web} 5)
         jean (sut/Eng. :jean #{:ios} 5)
-        brolly (sut/Eng. :brolly #{:app :ios} 16)]
+        brolly (sut/Eng. :brolly #{:app :ios :web} 16)]
     (tutils/are-equal sut/work-out
                       [proj [jan]]
                       [(assoc proj :effort {:app 5 :web 10 :ios 5})
@@ -88,4 +88,40 @@
                       [(assoc proj :effort {:app 5 :web 5 :ios 0})
                        [(assoc jan :capacity 0)
                         (assoc paul :capacity 0)
-                        (assoc jean :capacity 0)]])))
+                        (assoc jean :capacity 0)]]
+
+                      [proj [jan paul jean brolly]]
+                      [(assoc proj :effort {:app 0 :web 0 :ios 0})
+                       [(assoc jan :capacity 0)
+                        (assoc paul :capacity 0)
+                        (assoc jean :capacity 0)
+                        (assoc brolly :capacity 6)]])))
+
+(t/deftest work-backlog
+  (let [frontback (sut/Project. :frontback {:app 10 :web 10 :ios 5})
+        justback (sut/Project. :justback {:app 3})
+        jan (sut/Eng. :jan #{:web :app} 5)
+        paul (sut/Eng. :paul #{:web} 5)
+        jean (sut/Eng. :jean #{:ios} 5)
+        brolly (sut/Eng. :brolly #{:app :ios :web} 16)]
+    (tutils/are-equal sut/work-backlog
+                      [[frontback] [jan paul jean]]
+                      [[(assoc frontback :effort {:app 5 :web 5 :ios 0})]
+                       [(assoc jan :capacity 0)
+                        (assoc paul :capacity 0)
+                        (assoc jean :capacity 0)]]
+
+                      [[frontback justback] [jan paul jean]]
+                      [[(assoc frontback :effort {:app 5 :web 5 :ios 0})
+                        justback]
+                       [(assoc jan :capacity 0)
+                        (assoc paul :capacity 0)
+                        (assoc jean :capacity 0)]]
+
+                      [[frontback justback] [jan paul jean brolly]]
+                      [[(assoc frontback :effort {:app 0 :web 0 :ios 0})
+                        (assoc justback :effort {:app 0})]
+                       [(assoc jan :capacity 0)
+                        (assoc paul :capacity 0)
+                        (assoc jean :capacity 0)
+                        (assoc brolly :capacity 3)]])))

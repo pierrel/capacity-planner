@@ -49,3 +49,12 @@
       [(assoc eng :capacity rem-capacity)
        (merge-with merge proj {:effort rem-effort})])))
 
+
+(defn work-backlog
+  "Returns [backlog', team'] of the backlog and team after working"
+  [backlog team]
+  (reduce (fn [[res-backlog rem-team] project]
+            (let [[worked-project res-team] (work-out project rem-team)]
+              [(conj res-backlog worked-project) res-team]))
+          [[] team]
+          backlog))
