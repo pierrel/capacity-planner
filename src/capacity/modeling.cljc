@@ -6,7 +6,7 @@
   (doable [x y] "Returns a modified y which can be done by x")
   (work-on [x y] "Returns [x', y'] the result of `x` working on `y`"))
 (defprotocol Workable
-  (get-worked-on [x y] "returns [x', y'] the result of `y` working on `x`"))
+  (work-out [x y] "returns [x', y'] the result of `y` working on `x`"))
 
 (defn capacity-to-points
   "Returns [capacity, points] after transferring as much capacity to points."
@@ -28,7 +28,7 @@
 
 (defrecord Project [name effort]
   Workable
-  (get-worked-on [proj team]
+  (work-out [proj team]
     (reduce (fn [[proj res-team] eng]
               (let [[rem-eng rem-proj] (work-on eng proj)]
                 [rem-proj (conj res-team rem-eng)]))

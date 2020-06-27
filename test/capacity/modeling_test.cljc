@@ -68,13 +68,13 @@
                     [(sut/Eng. :pierre #{:web :ios} 0)
                      (Project. :simple {:web 0 :ios 0})]))
 
-(t/deftest get-worked-on
+(t/deftest work-out
   (let [proj (sut/Project. :something {:app 10 :web 10 :ios 5})
         jan (sut/Eng. :jan #{:web :app} 5)
         paul (sut/Eng. :paul #{:web} 5)
         jean (sut/Eng. :jean #{:ios} 5)
         brolly (sut/Eng. :brolly #{:app :ios} 16)]
-    (tutils/are-equal sut/get-worked-on
+    (tutils/are-equal sut/work-out
                       [proj [jan]]
                       [(assoc proj :effort {:app 5 :web 10 :ios 5})
                        [(assoc jan :capacity 0)]]
