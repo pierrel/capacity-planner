@@ -62,6 +62,14 @@
   (diff [before after]
     {:capacity (apply - (map :capacity [after before]))}))
 
+(defn summarize-named
+  [before after]
+  (let [mirror (partition 2 (interleave before after))]
+    (map #(let [[before after] %]
+            (hash-map :name (:name before)
+                      :check (apply = (map :name [before after]))
+                      :diff (diff before after)))
+         mirror)))
 
 (defn work-backlog
   "Returns [backlog', team'] of the backlog and team after working"
@@ -71,3 +79,16 @@
               [(conj res-backlog worked-project) res-team]))
           [[] team]
           backlog))
+
+(defn work-backlog-iter
+  "Works the backlog over multiple team iterations"
+  [backlog iterations]
+  (reduce (fn [[rem-backlog backlog-sums team-sums] team]
+            (let [[res-backlog res-team] (work-backlog rem-backlog team)
+                  backlog-sum (summarize-named rem-backlog res-backlog)
+                  team-sum (summarize-named team res-team)]
+              [res-backlog
+               (conj backlog-sums backlog-sum)
+               (conj team-sums team-sum)]))
+          [backlog [] []]
+          iterations))

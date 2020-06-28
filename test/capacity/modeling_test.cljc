@@ -167,3 +167,19 @@
                     [(Eng. :pierre #{} 4)
                      (Eng. :pierre #{} 10)]
                     {:capacity 6}))
+
+(t/deftest summarize-named
+  (tutils/are-equal sut/summarize-named
+                    [[(Project. :med {:app 10 :web 10})
+                      (Project. :large {:app 15 :web 20})]
+                     [(Project. :med {:app 5 :web 5})
+                      (Project. :large {:app 0 :web 3})]]
+                    [{:name :med :check true :diff {:app -5 :web -5}}
+                     {:name :large :check true :diff {:app -15 :web -17}}]
+
+                    [[(Eng. :josh #{} 10)
+                      (Eng. :jess #{} 5)]
+                     [(Eng. :josh #{} 0)
+                      (Eng. :jess #{} 3)]]
+                    [{:name :josh :check true :diff {:capacity -10}}
+                     {:name :jess :check true :diff {:capacity -2}}]))
