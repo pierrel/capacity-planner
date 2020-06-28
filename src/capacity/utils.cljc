@@ -18,3 +18,8 @@
                        (partition 2 (interleave (range) example)))]
     (sort-by (comp lookup unique-key)
              unordered)))
+
+(defn group-interleave
+  [& colls]
+  (partition (count colls)
+             (apply interleave colls)))
