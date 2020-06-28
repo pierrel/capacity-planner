@@ -1,7 +1,8 @@
 (ns capacity.modeling)
 
 (defprotocol Finite
-  (exhausted? [x] "Can no longer work or be worked on"))
+  (exhausted? [x] "Can no longer work or be worked on")
+  (diff [before after] "Difference between `before` and `after`"))
 (defprotocol Worker
   (doable [x y] "Returns a modified y which can be done by x")
   (work-on [x y] "Returns [x', y'] the result of `x` working on `y`"))
@@ -33,7 +34,13 @@
               (let [[rem-eng rem-proj] (work-on eng proj)]
                 [rem-proj (conj res-team rem-eng)]))
             [proj []]
-            team)))
+            team))
+  Finite
+  (exhausted? [proj]
+    (every? zero? (map last (:effort proj))))
+  (diff [before after]
+    (apply (partial merge-with -)
+           (map :effort [after before]))))
 
 (defrecord Eng [name profs capacity]
   Worker
@@ -47,7 +54,13 @@
                                            (doable eng
                                                    (:effort proj)))]
       [(assoc eng :capacity rem-capacity)
-       (merge-with merge proj {:effort rem-effort})])))
+       (merge-with merge proj {:effort rem-effort})]))
+
+  Finite
+  (exhausted? [eng]
+    (-> eng :capacity zero?))
+  (diff [before after]
+    (apply - (map :capacity [after before]))))
 
 
 (defn work-backlog

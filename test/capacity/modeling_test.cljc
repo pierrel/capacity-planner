@@ -125,3 +125,45 @@
                         (assoc paul :capacity 0)
                         (assoc jean :capacity 0)
                         (assoc brolly :capacity 3)]])))
+
+;; Finite
+(t/deftest exhausted?
+  (tutils/are-equal sut/exhausted?
+                    [(Project. :some {:app 0 :web 10})]
+                    false
+
+                    [(Project. :ah {:me 0 :web 0})]
+                    true
+
+                    [(Eng. :pierre #{:one :two} 10)]
+                    false
+
+                    [(Eng. :pierre #{:two :one} 0)]
+                    true))
+(t/deftest diff
+  (tutils/are-equal sut/diff
+                    ;; Project
+                    [(Project. :one {:app 10 :web 3})
+                     (Project. :one {:app 5 :web 0})]
+                    {:app -5 :web -3}
+
+                    [(Project. :one {:app 10 :web 3})
+                     (Project. :one {:app 10 :web 3})]
+                    {:app 0 :web 0}
+
+                    [(Project. :one {:app 10 :web 3})
+                     (Project. :one {:app 10 :web 4 :ios 5})]
+                    {:app 0 :web 1 :ios 5}
+
+                    ;; Eng
+                    [(Eng. :pierre #{} 5)
+                     (Eng. :pierre #{} 0)]
+                    -5
+
+                    [(Eng. :pierre #{} 3)
+                     (Eng. :pierre #{} 3)]
+                    0
+
+                    [(Eng. :pierre #{} 4)
+                     (Eng. :pierre #{} 10)]
+                    6))
