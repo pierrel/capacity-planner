@@ -60,7 +60,7 @@
   (exhausted? [eng]
     (-> eng :capacity zero?))
   (diff [before after]
-    (apply - (map :capacity [after before]))))
+    {:capacity (apply - (map :capacity [after before]))}))
 
 
 (defn work-backlog

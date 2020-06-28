@@ -158,12 +158,12 @@
                     ;; Eng
                     [(Eng. :pierre #{} 5)
                      (Eng. :pierre #{} 0)]
-                    -5
+                    {:capacity -5}
 
                     [(Eng. :pierre #{} 3)
                      (Eng. :pierre #{} 3)]
-                    0
+                    {:capacity 0}
 
                     [(Eng. :pierre #{} 4)
                      (Eng. :pierre #{} 10)]
-                    6))
+                    {:capacity 6}))
