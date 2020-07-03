@@ -1,20 +1,12 @@
 (ns capacity.modeling-test
   (:require [capacity.modeling :as sut]
-            [capacity.test-utils :as tutils]
             #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true]))
+  (:use [capacity.test-utils])
   (:import [capacity.modeling Eng Project]))
 
-
 (t/deftest capacity-to-points
-  (is-equal sut/capacity-to-points [10 20] [0 10])
-  (is-equal sut/capacity-to-points [20 5] [15 0])
-  (is-equal sut/capacity-to-points [10 10] [0 0])
-  (is-equal sut/capacity-to-points [5 0] [5 0])
-  (is-equal sut/capacity-to-points [0 2] [0 2]))
-
-(t/deftest capacity-to-points
-  (tutils/are-equal sut/capacity-to-points
+  (are-equal sut/capacity-to-points
                     [10 20] [0 10]
                     [20 5] [15 0]
                     [10 10] [0 0]
@@ -33,7 +25,7 @@
                                    {:app 10 :web 5}))))
 
 (t/deftest doable
-  (tutils/are-equal sut/doable
+  (are-equal sut/doable
                     [(sut/Eng. :john #{:app :web} 2)
                      {:app 10 :web 5}]
                     {:app 10 :web 5}
@@ -47,7 +39,7 @@
                     {:one 1 :two 2}))
 
 (t/deftest work-on
-  (tutils/are-equal sut/work-on
+  (are-equal sut/work-on
                     [(sut/Eng. :pierre #{:web :ios} 14)
                      (sut/Project. :simple {:web 10 :app 20 :ios 4})]
                     [(sut/Eng. :pierre #{:web :ios} 0)
@@ -74,7 +66,7 @@
         paul (sut/Eng. :paul #{:web} 5)
         jean (sut/Eng. :jean #{:ios} 5)
         brolly (sut/Eng. :brolly #{:app :ios :web} 16)]
-    (tutils/are-equal sut/work-out
+    (are-equal sut/work-out
                       [proj [jan]]
                       [(assoc proj :effort {:app 5 :web 10 :ios 5})
                        [(assoc jan :capacity 0)]]
@@ -104,7 +96,7 @@
         paul (sut/Eng. :paul #{:web} 5)
         jean (sut/Eng. :jean #{:ios} 5)
         brolly (sut/Eng. :brolly #{:app :ios :web} 16)]
-    (tutils/are-equal sut/work-backlog
+    (are-equal sut/work-backlog
                       [[frontback] [jan paul jean]]
                       [[(assoc frontback :effort {:app 5 :web 5 :ios 0})]
                        [(assoc jan :capacity 0)
@@ -128,7 +120,7 @@
 
 ;; Finite
 (t/deftest exhausted?
-  (tutils/are-equal sut/exhausted?
+  (are-equal sut/exhausted?
                     [(Project. :some {:app 0 :web 10})]
                     false
 
@@ -141,7 +133,7 @@
                     [(Eng. :pierre #{:two :one} 0)]
                     true))
 (t/deftest diff
-  (tutils/are-equal sut/diff
+  (are-equal sut/diff
                     ;; Project
                     [(Project. :one {:app 10 :web 3})
                      (Project. :one {:app 5 :web 0})]
@@ -169,7 +161,7 @@
                     {:capacity 6}))
 
 (t/deftest summarize-named
-  (tutils/are-equal sut/summarize-named
+  (are-equal sut/summarize-named
                     [[(Project. :med {:app 10 :web 10})
                       (Project. :large {:app 15 :web 20})]
                      [(Project. :med {:app 5 :web 5})
@@ -183,3 +175,27 @@
                       (Eng. :jess #{} 3)]]
                     [{:name :josh :check true :diff {:capacity -10}}
                      {:name :jess :check true :diff {:capacity -2}}]))
+
+(t/deftest work-backlog-iter
+  (are-equal sut/work-backlog-iter
+                    [[(Project. :med {:app 10 :web 10})
+                      (Project. :large {:app 15 :web 20})]
+                     [[(Eng. :pierre #{:app :web} 10)
+                       (Eng. :jan #{:web} 5)]
+                      [(Eng. :pierre #{:app :web} 10)
+                       (Eng. :jan #{:web} 5)]]]
+
+                    [[(Project. :med {:app 0 :web 0})
+                      (Project. :large {:app 10 :web 15})]
+                     [[(Project. :med {:app 10 :web 10})
+                       (Project. :large {:app 15 :web 20})]
+                      [(Project. :med {:app 0 :web 5})
+                       (Project. :large {:app 15 :web 20})]]
+                     ['({:name :med :check true :diff {:app -10 :web -5}}
+                       {:name :large :check true :diff {:app 0 :web 0}})
+                      '({:name :med :check true :diff {:app 0 :web -5}}
+                       {:name :large :check true :diff {:app -5 :web -5}})]
+                     ['({:name :pierre :check true :diff {:capacity -10}}
+                        {:name :jan :check true :diff {:capacity -5}})
+                      '({:name :pierre :check true :diff {:capacity -10}}
+                        {:name :jan :check true :diff {:capacity -5}})]]))

@@ -83,12 +83,13 @@
 (defn work-backlog-iter
   "Works the backlog over multiple team iterations"
   [backlog iterations]
-  (reduce (fn [[rem-backlog backlog-sums team-sums] team]
+  (reduce (fn [[rem-backlog backlogs backlog-sums team-sums] team]
             (let [[res-backlog res-team] (work-backlog rem-backlog team)
                   backlog-sum (summarize-named rem-backlog res-backlog)
                   team-sum (summarize-named team res-team)]
               [res-backlog
+               (conj backlogs rem-backlog)
                (conj backlog-sums backlog-sum)
                (conj team-sums team-sum)]))
-          [backlog [] []]
+          [backlog [] [] []]
           iterations))
