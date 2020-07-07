@@ -1,29 +1,10 @@
 (ns capacity.runner
   (:require [capacity.config :as config]
-            [capacity.modeling :as models]
             [capacity.utils :as utils])
   (:use [capacity.core]
         [clojure.pprint])
-  (:import [capacity.modeling Eng Project]))
+  (:import [capacity.core Eng Project]))
 
-(defn report-on [result]
-  (println "Completed: " (:completed result))
-  (println "Made progress on: " (map :name (:progressed result)))
-  (println "Left with capacity: " (:remaining-team result)))
-
-(defn run-and-report [filename]
-  (let [conf     (config/read filename)
-        projects (:projects conf)
-        const    (:constants conf)
-        results  (work-on-long projects
-                               (:contrib conf)
-                               const
-                               (:profs conf))]
-    (doseq [[iter result] (partition 2 (interleave (rest (range)) results))]
-      (println "Iteration " iter)
-      (report-on result)
-      (println))
-    results))
 ;; Need to re-write these not to take "key"
 (defn remaining
   [key original summary]
@@ -49,12 +30,12 @@
        (filter #(apply filt %)
                (utils/group-interleave original summary))))
 
-(defn run-models [filename]
+(defn run-and-report [filename]
   (let [[backlog iterations] (config/to-models filename)
         [rem-backlog
          backlogs
          backlog-summaries
-         team-summaries] (models/work-backlog-iter backlog iterations)]
+         team-summaries] (work-backlog-iter backlog iterations)]
     (doseq [[iter
              iter-backlog
              backlog-summary
@@ -90,5 +71,4 @@
 
 (defn -main [& args]
   (let [file (or (first args) "config.edn")]
-    (run-and-report file)
-    (run-models file)))
+    (run-and-report file)))

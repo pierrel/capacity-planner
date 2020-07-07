@@ -1,6 +1,6 @@
 (ns capacity.config
-  (:require [capacity.modeling :as models])
-  (:import [capacity.modeling Eng Project]))
+  (:require [capacity.core :as models])
+  (:import [capacity.core Eng Project]))
 
 (defn make-team
   [contribs profs points]

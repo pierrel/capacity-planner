@@ -1,158 +1,201 @@
 (ns capacity.core-test
   (:require [capacity.core :as sut]
-            [capacity.config :as config]
             #?(:clj [clojure.test :as t]
-               :cljs [cljs.test :as t :include-macros true])))
+               :cljs [cljs.test :as t :include-macros true]))
+  (:use [capacity.test-utils])
+  (:import [capacity.core Eng Project]))
 
-(t/deftest update-teammate-capacity
-  (let [capacity '({:name :pierre :capacity 10}
-                   {:name :leo :capacity 3})]
-    (t/is (= '({:name :pierre :capacity 4}
-               {:name :leo :capacity 3})
-             (sut/update-teammate-capacity capacity :pierre 4)))
-    (t/is (= capacity
-             (sut/update-teammate-capacity capacity :noone 10)))))
+(t/deftest capacity-to-points
+  (are-equal sut/capacity-to-points
+                    [10 20] [0 10]
+                    [20 5] [15 0]
+                    [10 10] [0 0]
+                    [5 0] [5 0]
+                    [0 2] [0 2]))
 
-(t/deftest eng-work-on
-  (t/is (= [{:capacity 5} 0]
-           (sut/eng-work-on {:capacity 10} 5)))
-  (t/is (= [{:capacity 0} 30]
-           (sut/eng-work-on {:capacity 20} 50)))
-  (t/is (= [{:capacity 0} 0]
-           (sut/eng-work-on {:capacity 2} 2)))
-  (t/is (= [{:capacity 0} 10]
-           (sut/eng-work-on {:capacity 0} 10)))
-  (t/is (= [{:capacity 10} 0]
-           (sut/eng-work-on {:capacity 10} 0))))
+(t/deftest capacity-to-effort
+  (t/is (= [2 {:app 0 :web 0}]
+           (sut/capacity-to-effort 18
+                                   {:app 10 :web 6})))
+  (t/is (= [0 {:app 0 :web 4}]
+           (sut/capacity-to-effort 20
+                                   {:app 10 :web 14})))
+  (t/is (= [0 {:app 10 :web 5}]
+           (sut/capacity-to-effort 0
+                                   {:app 10 :web 5}))))
 
-(t/deftest team-work-on-tech
-  (let [capacity '({:name :pierre :capacity 10 :profs #{:app}}
-                   {:name :jonathan :capacity 15 :profs #{:app}}
-                   {:name :leo :capacity 13 :profs #{:ios}})]
-    (t/is (= ['({:name :pierre :capacity 10 :profs #{:app}}
-                {:name :jonathan :capacity 15 :profs #{:app}}
-                {:name :leo :capacity 3 :profs #{:ios}})
-              0]
-             (sut/team-work-on-tech capacity :ios 10)))
-    (t/is (= ['({:name :pierre :capacity 10 :profs #{:app}}
-                {:name :jonathan :capacity 15 :profs #{:app}}
-                {:name :leo :capacity 0 :profs #{:ios}})
-              3]
-             (sut/team-work-on-tech capacity :ios 16)))
-    (t/is (= ['({:name :pierre :capacity 0 :profs #{:app}}
-                {:name :jonathan :capacity 3 :profs #{:app}}
-                {:name :leo :capacity 13 :profs #{:ios}})
-              0]
-             (sut/team-work-on-tech capacity :app 22)))))
+(t/deftest doable
+  (are-equal sut/doable
+                    [(sut/Eng. :john #{:app :web} 2)
+                     {:app 10 :web 5}]
+                    {:app 10 :web 5}
 
-(t/deftest work-on-project
-  (let [capacity '({:name :pierre :capacity 10 :profs #{:app}}
-                   {:name :jonathan :capacity 15 :profs #{:app}}
-                   {:name :leo :capacity 13 :profs #{:ios}})
-        project {:name "something" :effort {:ios 10 :app 20}}]
-    (t/is (= [{:name "something" :effort {:ios 0 :app 0}}
-              '({:name :pierre :capacity 0 :profs #{:app}}
-                {:name :jonathan :capacity 5 :profs #{:app}}
-                {:name :leo :capacity 3 :profs #{:ios}})]
-             (sut/work-on-project project capacity)))
-    (t/is (= [{:name "something" :effort {:ios 0 :app 0}}
-              '({:name :ernesto :capacity 10 :profs #{:app :web}}
-                {:name :pierre :capacity 0 :profs #{:app}}
-                {:name :jonathan :capacity 5 :profs #{:app}}
-                {:name :leo :capacity 3 :profs #{:ios}})]
-             (sut/work-on-project project
-                                  (conj capacity
-                                        {:name :ernesto
-                                         :capacity 10
-                                         :profs #{:app :web}}))))
-    (t/is (= [{:name "something else" :effort {:web 10 :app 5}}
-              '({:name :pierre, :capacity 0, :profs #{:app}}
-                {:name :jonathan, :capacity 0, :profs #{:app}}
-                {:name :leo, :capacity 3, :profs #{:ios}} )]
-             (sut/work-on-project
-              {:name "something else" :effort {:web 10 :app 10}}
-              '({:name :pierre, :capacity 0, :profs #{ :app } }
-                { :name :jonathan, :capacity 5, :profs #{ :app } }
-                { :name :leo, :capacity 3, :profs #{ :ios } } ))))))
+                    [(sut/Eng. :peter #{:ios} 3)
+                     {:app 10 :web 5}]
+                    {}
+
+                    [(sut/Eng. :cathy #{:one :two} 200)
+                     {:one 1 :two 2 :three 3}]
+                    {:one 1 :two 2}))
 
 (t/deftest work-on
-  (let [capacity '({:name :pierre :capacity 10 :profs #{:app}}
-                   {:name :jonathan :capacity 15 :profs #{:app}}
-                   {:name :leo :capacity 13 :profs #{:ios}})
-        projects '({:name "something" :effort {:ios 10 :app 20}}
-                    {:name "something else" :effort {:web 10 :app 10}})]
-    (t/is (= ['({:name "something", :effort {:ios 0, :app 0}}
-                {:name "something else", :effort {:web 10, :app 5}})
-              '({:name :pierre, :capacity 0, :profs #{:app}}
-                {:name :jonathan, :capacity 0, :profs #{:app}}
-                {:name :leo, :capacity 3, :profs #{:ios}})]
-             (sut/work-on projects capacity)))))
+  (are-equal sut/work-on
+                    [(sut/Eng. :pierre #{:web :ios} 14)
+                     (sut/Project. :simple {:web 10 :app 20 :ios 4})]
+                    [(sut/Eng. :pierre #{:web :ios} 0)
+                     (sut/Project. :simple {:web 0 :app 20 :ios 0})]
 
-(t/deftest work-on-long
-  (let [config (config/read "test/resources/test-config.edn")
-        projects(:projects config)
-        const (:constants config)]
-    (t/is (= [{:completed '("Dynamic FCap" "Online Events Attribution"),
-            :progressed
-            '({:name "A11y", :effort {:web 3.0500000000000007}}
-             {:name "Objectives", :effort {:web 4, :app 0}}
-             {:name "Editability", :effort {:ios 0, :android 0, :app 0, :web 3}}
-             {:name "Test leads", :effort {:app 10.599999999999998}}),
-            :remaining-team ()}
-           {:completed
-            '("A11y"
-             "Objectives"
-             "Editability"
-             "Test leads"
-             "TextViewModel migration"
-             "SSCS"),
-            :progressed
-            '({:name "C2M",
-              :effort {:ios 0, :android 0, :web 0, :app 14.049999999999997}}),
-            :remaining-team ()}
-           {:completed '("C2M" "Deprecate Custom Senders" "Sender Identity"),
-            :progressed
-            '({:name "Human handoff",
-              :effort {:app 0, :web 29.599999999999998, :android 5.25, :ios 0}}),
-            :remaining-team
-            '({:name :jimmy, :profs #{:ios :app}, :capacity 10.400000000000002})}
-           {:completed '("Human handoff"),
-            :progressed (),
-            :remaining-team
-            '({:name :jeff, :profs #{:ios :app}, :capacity 25.5}
-             {:name :kent, :profs #{:app}, :capacity 25.5}
-             {:name :cathy, :profs #{:app :data}, :capacity 25.5}
-             {:name :eric, :profs #{:app :web}, :capacity 18.85}
-             {:name :jordan, :profs #{:app :web}, :capacity 25.5}
-             {:name :john, :profs #{:android :app}, :capacity 20.25}
-             {:name :jimmy, :profs #{:ios :app}, :capacity 20.400000000000002})}]
-             (sut/work-on-long projects
-                               (:contrib config)
-                               const
-                               (:profs config))))))
+                    [(sut/Eng. :pierre #{:web :ios} 14)
+                     (sut/Project. :simple {:app 20})]
+                    [(sut/Eng. :pierre #{:web :ios} 14)
+                     (Project. :simple {:app 20})]
 
-(t/deftest has-prof-avaialble?
-  (t/is (= false
-           (sut/has-prof-available? {:capacity 0 :profs #{:app}}
-                                    :app)))
-  (t/is (= false
-           (sut/has-prof-available? {:capacity 10 :profs #{:app}}
-                                    :ios)))
-  (t/is (= true
-           (sut/has-prof-available? {:capacity 1 :profs #{:app}}
-                                    :app))))
+                    [(sut/Eng. :pierre #{:web :ios} 15)
+                     (Project. :simple {:web 50 :app 20 :ios 4})]
+                    [(sut/Eng. :pierre #{:web :ios} 0)
+                     (Project. :simple {:web 35 :app 20 :ios 4})]
 
-(t/deftest has-effort?
-  (t/is (= true
-           (sut/has-effort? {:effort {:app 10 :ios 0}})))
-  (t/is (= nil
-           (sut/has-effort? {:effort {:app 0 :web 0}}))))
+                    [(sut/Eng. :pierre #{:web :ios} 14)
+                     (Project. :simple {:web 10 :ios 4})]
+                    [(sut/Eng. :pierre #{:web :ios} 0)
+                     (Project. :simple {:web 0 :ios 0})]))
 
-(t/deftest update-effort
-  (t/is (= {:effort {:app 25
-                     :ios 15}
-            :name "whatever"}
-           (sut/update-effort {:effort {:app 10
-                                         :ios 15}
-                                :name "whatever"}
-                               {:app 25}))))
+(t/deftest work-out
+  (let [proj (sut/Project. :something {:app 10 :web 10 :ios 5})
+        jan (sut/Eng. :jan #{:web :app} 5)
+        paul (sut/Eng. :paul #{:web} 5)
+        jean (sut/Eng. :jean #{:ios} 5)
+        brolly (sut/Eng. :brolly #{:app :ios :web} 16)]
+    (are-equal sut/work-out
+                      [proj [jan]]
+                      [(assoc proj :effort {:app 5 :web 10 :ios 5})
+                       [(assoc jan :capacity 0)]]
+
+                      [proj [jan paul]]
+                      [(assoc proj :effort {:app 5 :web 5 :ios 5})
+                       [(assoc jan :capacity 0)
+                        (assoc paul :capacity 0)]]
+
+                      [proj [jan paul jean]]
+                      [(assoc proj :effort {:app 5 :web 5 :ios 0})
+                       [(assoc jan :capacity 0)
+                        (assoc paul :capacity 0)
+                        (assoc jean :capacity 0)]]
+
+                      [proj [jan paul jean brolly]]
+                      [(assoc proj :effort {:app 0 :web 0 :ios 0})
+                       [(assoc jan :capacity 0)
+                        (assoc paul :capacity 0)
+                        (assoc jean :capacity 0)
+                        (assoc brolly :capacity 6)]])))
+
+(t/deftest work-backlog
+  (let [frontback (sut/Project. :frontback {:app 10 :web 10 :ios 5})
+        justback (sut/Project. :justback {:app 3})
+        jan (sut/Eng. :jan #{:web :app} 5)
+        paul (sut/Eng. :paul #{:web} 5)
+        jean (sut/Eng. :jean #{:ios} 5)
+        brolly (sut/Eng. :brolly #{:app :ios :web} 16)]
+    (are-equal sut/work-backlog
+                      [[frontback] [jan paul jean]]
+                      [[(assoc frontback :effort {:app 5 :web 5 :ios 0})]
+                       [(assoc jan :capacity 0)
+                        (assoc paul :capacity 0)
+                        (assoc jean :capacity 0)]]
+
+                      [[frontback justback] [jan paul jean]]
+                      [[(assoc frontback :effort {:app 5 :web 5 :ios 0})
+                        justback]
+                       [(assoc jan :capacity 0)
+                        (assoc paul :capacity 0)
+                        (assoc jean :capacity 0)]]
+
+                      [[frontback justback] [jan paul jean brolly]]
+                      [[(assoc frontback :effort {:app 0 :web 0 :ios 0})
+                        (assoc justback :effort {:app 0})]
+                       [(assoc jan :capacity 0)
+                        (assoc paul :capacity 0)
+                        (assoc jean :capacity 0)
+                        (assoc brolly :capacity 3)]])))
+
+;; Finite
+(t/deftest exhausted?
+  (are-equal sut/exhausted?
+                    [(Project. :some {:app 0 :web 10})]
+                    false
+
+                    [(Project. :ah {:me 0 :web 0})]
+                    true
+
+                    [(Eng. :pierre #{:one :two} 10)]
+                    false
+
+                    [(Eng. :pierre #{:two :one} 0)]
+                    true))
+(t/deftest diff
+  (are-equal sut/diff
+                    ;; Project
+                    [(Project. :one {:app 10 :web 3})
+                     (Project. :one {:app 5 :web 0})]
+                    {:app -5 :web -3}
+
+                    [(Project. :one {:app 10 :web 3})
+                     (Project. :one {:app 10 :web 3})]
+                    {:app 0 :web 0}
+
+                    [(Project. :one {:app 10 :web 3})
+                     (Project. :one {:app 10 :web 4 :ios 5})]
+                    {:app 0 :web 1 :ios 5}
+
+                    ;; Eng
+                    [(Eng. :pierre #{} 5)
+                     (Eng. :pierre #{} 0)]
+                    {:capacity -5}
+
+                    [(Eng. :pierre #{} 3)
+                     (Eng. :pierre #{} 3)]
+                    {:capacity 0}
+
+                    [(Eng. :pierre #{} 4)
+                     (Eng. :pierre #{} 10)]
+                    {:capacity 6}))
+
+(t/deftest summarize-named
+  (are-equal sut/summarize-named
+                    [[(Project. :med {:app 10 :web 10})
+                      (Project. :large {:app 15 :web 20})]
+                     [(Project. :med {:app 5 :web 5})
+                      (Project. :large {:app 0 :web 3})]]
+                    [{:name :med :check true :diff {:app -5 :web -5}}
+                     {:name :large :check true :diff {:app -15 :web -17}}]
+
+                    [[(Eng. :josh #{} 10)
+                      (Eng. :jess #{} 5)]
+                     [(Eng. :josh #{} 0)
+                      (Eng. :jess #{} 3)]]
+                    [{:name :josh :check true :diff {:capacity -10}}
+                     {:name :jess :check true :diff {:capacity -2}}]))
+
+(t/deftest work-backlog-iter
+  (are-equal sut/work-backlog-iter
+                    [[(Project. :med {:app 10 :web 10})
+                      (Project. :large {:app 15 :web 20})]
+                     [[(Eng. :pierre #{:app :web} 10)
+                       (Eng. :jan #{:web} 5)]
+                      [(Eng. :pierre #{:app :web} 10)
+                       (Eng. :jan #{:web} 5)]]]
+
+                    [[(Project. :med {:app 0 :web 0})
+                      (Project. :large {:app 10 :web 15})]
+                     [[(Project. :med {:app 10 :web 10})
+                       (Project. :large {:app 15 :web 20})]
+                      [(Project. :med {:app 0 :web 5})
+                       (Project. :large {:app 15 :web 20})]]
+                     ['({:name :med :check true :diff {:app -10 :web -5}}
+                       {:name :large :check true :diff {:app 0 :web 0}})
+                      '({:name :med :check true :diff {:app 0 :web -5}}
+                       {:name :large :check true :diff {:app -5 :web -5}})]
+                     ['({:name :pierre :check true :diff {:capacity -10}}
+                        {:name :jan :check true :diff {:capacity -5}})
+                      '({:name :pierre :check true :diff {:capacity -10}}
+                        {:name :jan :check true :diff {:capacity -5}})]]))
