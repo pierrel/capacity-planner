@@ -39,10 +39,9 @@
 
 (defn completed
   [key original summary]
-  (and (progressed key original summary)
-       (every? zero? (map last (merge-with +
-                                           (get original key)
-                                           (:diff summary))))))
+  (every? zero? (map last (merge-with +
+                                      (get original key)
+                                      (:diff summary)))))
 
 (defn summarize
   [filt original summary]
@@ -66,10 +65,22 @@
                                                    iterations
                                                    team-summaries)]
       (println "Iteration " iter)
-      (println "Completed " (summarize (partial completed :effort)
+      ;; TODO: convert these # functions into compositions
+      (println "Completed " (summarize #(and (progressed :effort
+                                                         %1
+                                                         %2)
+                                             (completed :effort
+                                                        %1
+                                                        %2))
                                        iter-backlog
                                        backlog-summary))
-      (println "Made progress on " (summarize (partial progressed :effort)
+      (println "Made progress on " (summarize #(and (progressed :effort
+                                                                %1
+                                                                %2)
+                                                    (not
+                                                     (completed :effort
+                                                                %1
+                                                                %2)))
                                               iter-backlog
                                               backlog-summary))
       (println "Left with capacity" (summarize (partial remaining :capacity)
