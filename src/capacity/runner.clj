@@ -1,6 +1,7 @@
 (ns capacity.runner
   (:require [capacity.config :as config]
-            [capacity.utils :as utils])
+            [capacity.utils :as utils]
+            [clojure.string :as s])
   (:use [capacity.core]
         [clojure.pprint])
   (:import [capacity.core Eng Project]))
@@ -30,45 +31,59 @@
        (filter #(apply filt %)
                (utils/group-interleave original summary))))
 
+(defn report-map
+  [iter-backlog backlog-summary iter-team team-summary]
+  {:completed (summarize #(and (progressed :effort
+                                           %1
+                                           %2)
+                               (completed :effort
+                                          %1
+                                          %2))
+                         iter-backlog
+                         backlog-summary)
+   :progressed (summarize #(and (progressed :effort
+                                            %1
+                                            %2)
+                                (not
+                                 (completed :effort
+                                            %1
+                                            %2)))
+                          iter-backlog
+                          backlog-summary)
+   :leftover (summarize (partial remaining :capacity)
+                        iter-team
+                        team-summary)})
+
+(defn report-str
+  [iteration rmap]
+  (let [rmap-str (into {} (mapv #(vector (first %)
+                                         (s/join ", " (last %)))
+                                rmap))]
+    (str "Iteration " iteration "\n"
+         "Completed " (:completed rmap-str) "\n"
+         "Made progress on " (:progressed rmap-str) "\n"
+         "Left with capacity " (:leftover rmap-str) "\n")))
+
+(defn report
+  [iter iter-backlog backlog-summary iter-team team-summary]
+  (report-str iter (report-map iter-backlog
+                               backlog-summary
+                               iter-team
+                               team-summary)))
+
 (defn run-and-report [filename]
   (let [[backlog iterations] (config/to-models filename)
         [rem-backlog
          backlogs
          backlog-summaries
          team-summaries] (work-backlog-iter backlog iterations)]
-    (doseq [[iter
-             iter-backlog
-             backlog-summary
-             iter-team
-             team-summary] (utils/group-interleave (range)
-                                                   backlogs
-                                                   backlog-summaries
-                                                   iterations
-                                                   team-summaries)]
-      (println "Iteration " iter)
-      ;; TODO: convert these # functions into compositions
-      (println "Completed " (summarize #(and (progressed :effort
-                                                         %1
-                                                         %2)
-                                             (completed :effort
-                                                        %1
-                                                        %2))
-                                       iter-backlog
-                                       backlog-summary))
-      (println "Made progress on " (summarize #(and (progressed :effort
-                                                                %1
-                                                                %2)
-                                                    (not
-                                                     (completed :effort
-                                                                %1
-                                                                %2)))
-                                              iter-backlog
-                                              backlog-summary))
-      (println "Left with capacity" (summarize (partial remaining :capacity)
-                                               iter-team
-                                               team-summary))
-      (println))))
+    (s/join "\n" (map #(apply report %)
+                      (utils/group-interleave (range)
+                                              backlogs
+                                              backlog-summaries
+                                              iterations
+                                              team-summaries)))))
 
 (defn -main [& args]
   (let [file (or (first args) "config.edn")]
-    (run-and-report file)))
+    (println (run-and-report file))))

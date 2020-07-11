@@ -1,7 +1,8 @@
 (ns web.handler
   (:use ring.middleware.resource
         ring.util.response
-        ring.adapter.jetty))
+        ring.adapter.jetty)
+  (:require [capacity.runner :as runner]))
 
 (defn with-response [resp]
   (-> (response resp)
@@ -10,7 +11,7 @@
 
 (defn routes [{uri :uri}]
   (case uri
-    "/" (with-response "Works!")
+    "/" (with-response (runner/run-and-report "config-fy21.edn"))
     (-> (response "Page not found")
         (status 404))))
 
