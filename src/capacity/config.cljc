@@ -75,5 +75,3 @@
         iterations (map #(make-team % profs points)
                         (if (map? contrib) [contrib] contrib))]
     [backlog iterations]))
-
-;; TODO add some validation for the config file -- maybe use prism?
