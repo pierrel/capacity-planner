@@ -20,7 +20,7 @@
     (-> form finder validator)))
 
 (defn- collect-validation-messages
-  "Used to pass to reduce to collect messages that don't pass validation."
+  "Passed to reduce to collect messages that don't pass validation."
   [form error-messages validation]
   (if (valid-by? validation form)
     error-messages
