@@ -81,7 +81,13 @@
           backlog))
 
 (defn work-backlog-iter
-  "Works the backlog over multiple team iterations"
+  "Works the backlog over multiple team iterations.
+
+  Returns the remaining backlog (after all team iterations),
+          all backlogs (starting with the untouched backlog),
+          all backlog summaries (after apply the team),
+          all team summaries (after applying to the backlog)
+  In that order."
   [backlog iterations]
   (reduce (fn [[rem-backlog backlogs backlog-sums team-sums] team]
             (let [[res-backlog res-team] (work-backlog rem-backlog team)
