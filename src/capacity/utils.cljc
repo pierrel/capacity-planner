@@ -23,3 +23,9 @@
   [& colls]
   (partition (count colls)
              (apply interleave colls)))
+
+(defn insert
+  "Returns a new seq where `x` is inserted into the `n` position of `coll`"
+  [x n coll]
+  (let [[before after] (split-at n coll)]
+    (concat before (cons x after))))
