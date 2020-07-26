@@ -6,6 +6,7 @@
   (:require [capacity.config :as config]
             [capacity.report :as report]
             [capacity.utils :as utils]
+            [web.router :as router]
             [hiccup.core :as h])
   (:import [capacity.core Eng Project]))
 
@@ -36,11 +37,11 @@
       (status 200)))
 
 (defn routes [{uri :uri}]
-  (case uri
-    "/" (with-response (map (comp section render-summary)
-                            (summarize "config-fy21.edn")))
-    (-> (response "Page not found")
-        (status 404))))
+  (router/routes uri
+                 "/" (with-response (map (comp section render-summary)
+                                         (summarize "config-fy21.edn")))
+                 (-> (response "Page not found")
+                     (status 404))))
 
 (def app routes)
 
