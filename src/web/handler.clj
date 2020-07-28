@@ -37,11 +37,14 @@
       (status 200)))
 
 (defn routes [{uri :uri}]
-  (router/routes uri
-                 "/" (with-response (map (comp section render-summary)
-                                         (summarize "config-fy21.edn")))
-                 (-> (response "Page not found")
-                     (status 404))))
+  (router/routes
+   uri
+   "/{config-name}" (fn [{config-name :config-name}]
+                      (with-response
+                        (map (comp section render-summary)
+                             (summarize (str config-name ".edn")))))
+   (-> (response "Page not found")
+       (status 404))))
 
 (def app routes)
 
