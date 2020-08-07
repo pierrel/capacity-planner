@@ -42,8 +42,9 @@
 (defn routes
   "Returns the response based on uri match.
 
-  It's currently very slow since it has to construct the association each time
-  it's called. Need to store it somewhere in the future."
+  It's currently very slow since it has to construct the associations each time
+  it's called. Need to store it somewhere in the future. Probably need to use a
+  macro."
   [uri & route-resp-pairs]
   (let [default (last route-resp-pairs)
         route-resps (map #(apply to-route %)

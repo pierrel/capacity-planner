@@ -7,6 +7,8 @@
             [capacity.report :as report]
             [capacity.utils :as utils]
             [web.router :as router]
+            [web.templates :as t]
+            [clojure.string :as s]
             [hiccup.core :as h])
   (:import [capacity.core Eng Project]))
 
@@ -27,22 +29,69 @@
 (defn render-summary [summary]
   (map #(render-summary-item (-> % first name) (last %)) summary))
 
-(defn section
-  [form]
-  [:div form])
+(defn render-constants-inputs
+  [sprints unplanned velocity]
+  (into [:fieldset
+         [:legend "Constants"]]
+        (map (partial apply t/input)
+             [["input" "Sprints" sprints]
+              ["input" "Unplanned" unplanned]
+              ["input" "Velocity" velocity]])))
+
+(defn render-profs-inputs
+  [eng-profs]
+  (into [:fieldset
+         [:legend "Proficiencies"]]
+        (map #(let [[eng profs] %]
+                (t/input "input"
+                         (name eng)
+                         (s/join ", " (map name profs))))
+             eng-profs)))
+
+(defn render-contrib-iter-inputs
+  [contrib-iter]
+  (map #(let [[eng contrib] %]
+          (t/input "input"
+                   (name eng)
+                   contrib))
+       contrib-iter))
+
+(defn render-contrib-iter
+  [iteration contrib-iter]
+  (into [:fieldset
+         [:legend (str "Iteration " iteration)]]
+        (render-contrib-iter-inputs contrib-iter)))
+
+
+(defn render-contribs
+  [& contribs]
+  (into [:fieldset
+         [:legend "Contributions"]]
+        (map (partial apply render-contrib-iter)
+             (utils/group-interleave (range) contribs))))
 
 (defn with-response [resp]
-  (-> (response (h/html resp))
+  (-> (response (h/html (t/template resp)))
       (content-type "text/html")
       (status 200)))
 
 (defn routes [{uri :uri}]
   (router/routes
    uri
-   "/{config-name}" (fn [{config-name :config-name}]
-                      (with-response
-                        (map (comp section render-summary)
-                             (summarize (str config-name ".edn")))))
+   "/{config-name}"
+   (fn [{config-name :config-name}]
+     (with-response
+       (map (comp t/section render-summary)
+            (summarize (str config-name ".edn")))))
+
+   "/input/{config-name}"
+   (fn [{config-name :config-name}]
+     (with-response
+       (let [config (config/read (str config-name ".edn"))]
+         [(apply render-constants-inputs
+                 (map (:constants config) [:sprints :unplanned :velocity]))
+          (render-profs-inputs (:profs config))
+          (apply render-contribs (:contrib config))])))
    (-> (response "Page not found")
        (status 404))))
 
