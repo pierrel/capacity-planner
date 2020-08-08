@@ -1,6 +1,7 @@
 (ns capacity.config
   (:require [capacity.core :as models]
-            [capacity.validation :as validation])
+            [capacity.validation :as validation]
+            [clojure.set :as s])
   (:import [capacity.core Eng Project]))
 
 (def validations
@@ -40,7 +41,15 @@
    {:message "projects should have effort values as numbers"
     :finder (fn [form]
               (reduce concat (map #(-> % :effort vals) (:projects form))))
-    :validator (partial every? number?)}])
+    :validator (partial every? number?)}
+   {:message "projects cannot have effort that is not a proficiency"
+    :finder (fn [{profs :profs
+                  projects :projects}]
+              (map #(apply s/union %)
+                   [(map #(-> % :effort keys set)
+                          projects)
+                    (vals profs)]))
+    :validator (partial apply s/subset?)}])
 
 (defn validate
   [form]

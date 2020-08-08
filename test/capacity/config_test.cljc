@@ -3,6 +3,29 @@
             #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])))
 
+(def sample
+  {:context "testing"
+   :constants {:sprints 6 :unplanned 0.15 :velocity 5}
+   :profs {:pierre #{:app :web}
+           :selma #{:ios :android}}
+   :contrib [{:pierre 1 :selma 0.5}
+             {:pierre 0.5 :selma 2}]
+   :projects [{:name "Proj1"
+               :effort {:app 10
+                        :ios 3}}
+              {:name "Proj2"
+               :effort {:app 2
+                        :ios 4
+                        :android 2}}]})
+
+(t/deftest validate
+  (t/is (map? (sut/validate sample)))
+  (t/is (thrown-with-msg? RuntimeException
+                          #"effort that is not a proficiency"
+                          (sut/validate (update-in sample
+                                                   [:projects 0 :effort]
+                                                   #(assoc % :meme 10))))))
+
 (t/deftest read
   (t/is (= {:context "Test plan",
            :constants {:sprints 6, :unplanned 0.15, :velocity 5},
