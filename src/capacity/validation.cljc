@@ -4,7 +4,8 @@
   "Throws a RuntimeException with the given messages."
   [form messages]
   (throw (RuntimeException. (apply str
-                                   (concat (str "Validation errors:\n")
+                                   (concat (str (count messages))
+                                           (str " Validation errors:\n")
                                            (interleave
                                             (map #(str (inc %) ". ")
                                                  (range))
