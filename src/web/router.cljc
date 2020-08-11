@@ -52,4 +52,4 @@
         route-params (matching-route-params route-resps uri)]
     (if route-params
       (apply apply-route route-params)
-      (run default))))
+      default)))
