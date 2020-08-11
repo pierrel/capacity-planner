@@ -22,7 +22,9 @@
 
 (defn summarize
   [filt original summary]
-  (map #(-> % first :name)
+  (map #(str (-> % first :name)
+             " "
+             (-> % last :diff))
        (filter #(apply filt %)
                (utils/group-interleave original summary))))
 
