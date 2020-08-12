@@ -63,8 +63,8 @@
     {:capacity (apply - (map :capacity [after before]))}))
 
 (defn summarize-named
-  [before after]
-  (let [mirror (partition 2 (interleave before after))]
+  [befores afters]
+  (let [mirror (partition 2 (interleave befores afters))]
     (map #(let [[before after] %]
             (hash-map :name (:name before)
                       :check (apply = (map :name [before after]))
