@@ -65,10 +65,9 @@
 (defn summarize-named
   [befores afters]
   (let [mirror (partition 2 (interleave befores afters))]
-    (map #(let [[before after] %]
-            (hash-map :name (:name before)
-                      :check (apply = (map :name [before after]))
-                      :diff (diff before after)))
+    (map #(hash-map :name (-> % first :name)
+                    :check (apply = (map :name %))
+                    :diff (apply diff %))
          mirror)))
 
 (defn work-backlog
