@@ -160,21 +160,37 @@
                      (Eng. :pierre #{} 10)]
                     {:capacity 6}))
 
-(t/deftest summarize-named
-  (are-equal sut/summarize-named
+(t/deftest summarize
+  (are-equal sut/summarize
                     [[(Project. :med {:app 10 :web 10})
                       (Project. :large {:app 15 :web 20})]
                      [(Project. :med {:app 5 :web 5})
-                      (Project. :large {:app 0 :web 3})]]
-                    [{:name :med :check true :diff {:app -5 :web -5}}
-                     {:name :large :check true :diff {:app -15 :web -17}}]
+                      (Project. :large {:app 0 :web 3})]
+                     [(Project. :med {:app 10 :web 10})
+                      (Project. :large {:app 15 :web 20})]]
+                    [{:name :med
+                      :check true
+                      :diff {:app -5 :web -5}
+                      :ratio 1/2}
+                     {:name :large
+                      :check true
+                      :diff {:app -15 :web -17}
+                      :ratio 32/35}]
 
                     [[(Eng. :josh #{} 10)
                       (Eng. :jess #{} 5)]
                      [(Eng. :josh #{} 0)
-                      (Eng. :jess #{} 3)]]
-                    [{:name :josh :check true :diff {:capacity -10}}
-                     {:name :jess :check true :diff {:capacity -2}}]))
+                      (Eng. :jess #{} 3)]
+                     [(Eng. :josh #{} 10)
+                      (Eng. :jess #{} 5)]]
+                    [{:name :josh
+                      :check true
+                      :diff {:capacity -10}
+                      :ratio 1}
+                     {:name :jess
+                      :check true
+                      :diff {:capacity -2}
+                      :ratio 2/5}]))
 
 (t/deftest work-backlog-iter
   (are-equal sut/work-backlog-iter
@@ -191,11 +207,35 @@
                        (Project. :large {:app 15 :web 20})]
                       [(Project. :med {:app 0 :web 5})
                        (Project. :large {:app 15 :web 20})]]
-                     ['({:name :med :check true :diff {:app -10 :web -5}}
-                       {:name :large :check true :diff {:app 0 :web 0}})
-                      '({:name :med :check true :diff {:app 0 :web -5}}
-                       {:name :large :check true :diff {:app -5 :web -5}})]
-                     ['({:name :pierre :check true :diff {:capacity -10}}
-                        {:name :jan :check true :diff {:capacity -5}})
-                      '({:name :pierre :check true :diff {:capacity -10}}
-                        {:name :jan :check true :diff {:capacity -5}})]]))
+                     ['({:name :med
+                         :check true
+                         :diff {:app -10 :web -5}
+                         :ratio 3/4}
+                        {:name :large
+                         :check true
+                         :diff {:app 0 :web 0}
+                         :ratio 0})
+                      '({:name :med
+                         :check true
+                         :diff {:app 0 :web -5}
+                         :ratio 1}
+                        {:name :large
+                         :check true
+                         :diff {:app -5 :web -5}
+                         :ratio 2/7})]
+                     ['({:name :pierre
+                         :check true
+                         :diff {:capacity -10}
+                         :ratio 1}
+                        {:name :jan
+                         :check true
+                         :diff {:capacity -5}
+                         :ratio 1})
+                      '({:name :pierre
+                         :check true
+                         :diff {:capacity -10}
+                         :ratio 1}
+                        {:name :jan
+                         :check true
+                         :diff {:capacity -5}
+                         :ratio 1})]]))

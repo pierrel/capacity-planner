@@ -20,11 +20,14 @@
                                       (get original key)
                                       (:diff summary)))))
 
+(defn format-summary [summary]
+  (format "%s (%.2f)"
+          (:name summary)
+          (-> summary :ratio double)))
+
 (defn summarize
   [filt original summary]
-  (map #(str (-> % first :name)
-             " "
-             (-> % last :diff))
+  (map #(-> % last format-summary)
        (filter #(apply filt %)
                (utils/group-interleave original summary))))
 
