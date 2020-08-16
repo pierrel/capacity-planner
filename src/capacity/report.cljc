@@ -1,7 +1,7 @@
 (ns capacity.report
   (:require [capacity.utils :as utils]))
 
-;; Need to re-write these not to take "key"
+;; TODO: Need to re-write these not to take "key"
 (defn remaining
   [key original summary]
   (let [change (-> summary :diff key)
