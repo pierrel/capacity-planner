@@ -6,15 +6,16 @@
   [:div form])
 
 (defn input
-  [input-type label value]
-  (let [name (s/lower-case label)
-        id (str (s/lower-case label) "-" input-type)]
-    [:p
-     [:label {:for id} label]
-     [:input {:type input-type
-              :name name
-              :id id
-              :value value}]]))
+  ([input-type label name value]
+   (let [id (str (s/lower-case label) "-" input-type "-" name)]
+     [:p
+      [:label {:for id} label]
+      [:input {:type input-type
+               :name name
+               :id id
+               :value value}]]))
+  ([input-type label value]
+   (input input-type label (s/lower-case label) value)))
 
 (defn template [form]
   [:html

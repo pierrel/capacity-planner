@@ -9,10 +9,16 @@
             [web.router :as router]
             [web.templates :as t]
             [clojure.string :as s]
+            [clojure.set :as st]
             [hiccup.core :as h])
   (:import [capacity.core Eng Project]))
 
-(defn summarize [filename]
+(defn available-profs
+  [config]
+  (apply st/union
+         (-> config :profs vals)))
+
+(defn summarize-config [filename]
   (let [[backlog teams] (config/to-models filename)
         res (rest (work-backlog-iter backlog teams))
         res-w-teams (utils/insert teams 2 res)]
@@ -62,13 +68,41 @@
          [:legend (str "Iteration " iteration)]]
         (render-contrib-iter-inputs contrib-iter)))
 
-
 (defn render-contribs
   [& contribs]
   (into [:fieldset
          [:legend "Contributions"]]
         (map (partial apply render-contrib-iter)
              (utils/group-interleave (range) contribs))))
+
+(defn render-prof-val
+  [name-prefix prof value]
+  (t/input "input"
+           (format "%s effort" (name prof))
+           (format "%s-%s" name-prefix (name prof))
+           value))
+
+(defn render-effort
+  [project-number effort all-profs]
+  (map (partial apply render-prof-val)
+       (map (fn [[n prof]]
+              [(format "project-%d-effort-" n)
+               prof
+               (or (prof effort) 0)])
+        (utils/group-interleave (repeat project-number) all-profs))))
+
+(defn render-project
+  [number project all-profs]
+  [:fieldset (:name project)
+   (t/input "input"
+            "Rank"
+            (format "project-%d-rank" number)
+            number)
+   (t/input "input"
+            "Name"
+            (format "project-%d-name" number)
+            (:name project))
+   (render-effort number (:effort project) all-profs)])
 
 (defn with-response [resp]
   (-> (response (h/html (t/template resp)))
@@ -82,16 +116,29 @@
    (fn [{config-name :config-name}]
      (with-response
        (map (comp t/section render-summary)
-            (summarize (str config-name ".edn")))))
+            (summarize-config (str config-name ".edn")))))
 
    "/input/{config-name}"
    (fn [{config-name :config-name}]
-     (with-response
-       (let [config (config/read (str config-name ".edn"))]
-         [(apply render-constants-inputs
+     (let [config (config/read (str config-name ".edn"))]
+       (with-response
+         [:form {:action (format "/input/%s/submit" config-name)
+                 :method "POST"}
+          [:button "Submit"]
+          (apply render-constants-inputs
                  (map (:constants config) [:sprints :unplanned :velocity]))
           (render-profs-inputs (:profs config))
-          (apply render-contribs (:contrib config))])))
+          (apply render-contribs (:contrib config))
+          (into [:fieldset "Projects"]
+                (map #(render-project (first %)
+                                      (last %)
+                                      (available-profs config))
+                     (utils/group-interleave (range)
+                                             (:projects config))))])))
+
+   "/input/{config-name}/submit" ;; change this to be a POST
+   (fn [{config-name :config-name}]
+     (with-response [:p (str "Saved config " config-name)]))
    (-> (response "Page not found")
        (status 404))))
 
