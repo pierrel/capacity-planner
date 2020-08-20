@@ -1,6 +1,7 @@
 (ns web.handler
   (:use capacity.core
         ring.middleware.resource
+        ring.middleware.params
         ring.util.response
         ring.adapter.jetty)
   (:require [capacity.config :as config]
@@ -109,7 +110,8 @@
       (content-type "text/html")
       (status 200)))
 
-(defn routes [{uri :uri}]
+(defn routes [{uri :uri
+               params :params}]
   (router/routes
    uri
    "/{config-name}"
@@ -138,9 +140,11 @@
 
    "/input/{config-name}/submit" ;; change this to be a POST
    (fn [{config-name :config-name}]
-     (with-response [:p (str "Saved config " config-name)]))
+     (with-response [:div
+                     [:p (str "Saved config " config-name)]
+                     [:p (str params)]]))
    (-> (response "Page not found")
        (status 404))))
 
-(def app routes)
+(def app (wrap-params routes))
 
