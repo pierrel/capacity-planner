@@ -1,6 +1,7 @@
 (ns web.handler
   (:use capacity.core
         ring.middleware.resource
+        ring.middleware.nested-params
         ring.middleware.params
         ring.util.response
         ring.adapter.jetty)
@@ -41,9 +42,9 @@
   (into [:fieldset
          [:legend "Constants"]]
         (map (partial apply t/input)
-             [["input" "Sprints" sprints]
-              ["input" "Unplanned" unplanned]
-              ["input" "Velocity" velocity]])))
+             [["input" "Sprints" "constants[sprints]" sprints]
+              ["input" "Unplanned" "constants[unplanned]" unplanned]
+              ["input" "Velocity" "constants[velocity]" velocity]])))
 
 (defn render-profs-inputs
   [eng-profs]
@@ -110,41 +111,44 @@
       (content-type "text/html")
       (status 200)))
 
-(defn routes [{uri :uri
-               params :params}]
-  (router/routes
-   uri
-   "/{config-name}"
-   (fn [{config-name :config-name}]
-     (with-response
-       (map (comp t/section render-summary)
-            (summarize-config (str config-name ".edn")))))
-
-   "/input/{config-name}"
-   (fn [{config-name :config-name}]
-     (let [config (config/read (str config-name ".edn"))]
+(defn routes [request]
+  (let [{uri    :uri
+         params :params} request]
+    (router/routes
+     uri
+     "/{config-name}"
+     (fn [{config-name :config-name}]
        (with-response
-         [:form {:action (format "/input/%s/submit" config-name)
-                 :method "POST"}
-          [:button "Submit"]
-          (apply render-constants-inputs
-                 (map (:constants config) [:sprints :unplanned :velocity]))
-          (render-profs-inputs (:profs config))
-          (apply render-contribs (:contrib config))
-          (into [:fieldset "Projects"]
-                (map #(render-project (first %)
-                                      (last %)
-                                      (available-profs config))
-                     (utils/group-interleave (range)
-                                             (:projects config))))])))
+         (map (comp t/section render-summary)
+              (summarize-config (str config-name ".edn")))))
 
-   "/input/{config-name}/submit" ;; change this to be a POST
-   (fn [{config-name :config-name}]
-     (with-response [:div
-                     [:p (str "Saved config " config-name)]
-                     [:p (str params)]]))
-   (-> (response "Page not found")
-       (status 404))))
+     "/input/{config-name}"
+     (fn [{config-name :config-name}]
+       (let [config (config/read (str config-name ".edn"))]
+         (with-response
+           [:form {:action (format "/input/%s/submit" config-name)
+                   :method "POST"}
+            [:button "Submit"]
+            (apply render-constants-inputs
+                   (map (:constants config) [:sprints :unplanned :velocity]))
+            (render-profs-inputs (:profs config))
+            (apply render-contribs (:contrib config))
+            (into [:fieldset "Projects"]
+                  (map #(render-project (first %)
+                                        (last %)
+                                        (available-profs config))
+                       (utils/group-interleave (range)
+                                               (:projects config))))])))
+
+     "/input/{config-name}/submit" ;; change this to be a POST
+     (fn [{config-name :config-name}]
+       (with-response [:div
+                       [:p (str "Saved config " config-name)]
+                       [:p (str (-> request
+                                    nested-params-request
+                                    :params))]]))
+     (-> (response "Page not found")
+         (status 404)))))
 
 (def app (wrap-params routes))
 
