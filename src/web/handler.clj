@@ -20,6 +20,13 @@
   (apply st/union
          (-> config :profs vals)))
 
+(defn available-engs
+  [config]
+  (let [from-profs (-> config :profs keys set)
+        from-contrib (apply st/union (map (comp set keys)
+                                          (-> config :contrib)))]
+    (st/union from-contrib from-profs)))
+
 (defn summarize-config [filename]
   (let [[backlog teams] (config/to-models filename)
         res (rest (work-backlog-iter backlog teams))
@@ -57,29 +64,31 @@
              eng-profs)))
 
 (defn render-contrib-iter-inputs
-  [iteration contrib-iter]
-  (map #(let [[eng contrib] %
+  [iteration contrib-iter all-engs]
+  (map #(let [eng %
               eng-name (name eng)]
           (t/input "input"
                    eng-name
                    (format "contrib[%d][%s]"
                            iteration
                            eng-name)
-                   contrib))
-       contrib-iter))
+                   (or (eng contrib-iter) 0)))
+       all-engs))
 
 (defn render-contrib-iter
-  [iteration contrib-iter]
+  [iteration contrib-iter all-engs]
   (into [:fieldset
          [:legend (str "Iteration " iteration)]]
-        (render-contrib-iter-inputs iteration contrib-iter)))
+        (render-contrib-iter-inputs iteration contrib-iter all-engs)))
 
 (defn render-contribs
-  [& contribs]
+  [contribs all-engs]
   (into [:fieldset
          [:legend "Contributions"]]
         (map (partial apply render-contrib-iter)
-             (utils/group-interleave (range) contribs))))
+             (utils/group-interleave (range)
+                                     contribs
+                                     (repeat all-engs)))))
 
 (defn render-prof-val
   [project-name prof value]
@@ -137,7 +146,7 @@
             (apply render-constants-inputs
                    (map (:constants config) [:sprints :unplanned :velocity]))
             (render-profs-inputs (:profs config))
-            (apply render-contribs (:contrib config))
+            (render-contribs (:contrib config) (available-engs config))
             (into [:fieldset "Projects"]
                   (map #(render-project (first %)
                                         (last %)
