@@ -60,6 +60,7 @@
         (map #(let [[eng profs] %]
                 (t/input "input"
                          (name eng)
+                         (format "profs[%s]" (name eng))
                          (s/join ", " (map name profs))))
              eng-profs)))
 
