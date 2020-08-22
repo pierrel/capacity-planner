@@ -144,6 +144,10 @@
            [:form {:action (format "/input/%s/submit" config-name)
                    :method "POST"}
             [:button "Submit"]
+            (t/input "input"
+                     "Context"
+                     "context"
+                     (:context config))
             (apply render-constants-inputs
                    (map (:constants config) [:sprints :unplanned :velocity]))
             (render-profs-inputs (:profs config))
