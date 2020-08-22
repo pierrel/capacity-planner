@@ -73,7 +73,7 @@
                    (format "contrib[%d][%s]"
                            iteration
                            eng-name)
-                   (or (eng contrib-iter) 0)))
+                   (get contrib-iter eng 0)))
        all-engs))
 
 (defn render-contrib-iter
@@ -104,7 +104,7 @@
   [project-name effort all-profs]
   (map #(render-prof-val project-name
                          (name %)
-                         (or (effort %) 0))
+                         (get effort % 0))
        all-profs))
 
 (defn render-project
