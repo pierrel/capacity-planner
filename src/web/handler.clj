@@ -12,7 +12,8 @@
             [web.templates :as t]
             [clojure.string :as s]
             [clojure.set :as st]
-            [hiccup.core :as h])
+            [hiccup.core :as h]
+            [clojure.edn :as edn])
   (:import [capacity.core Eng Project]))
 
 (defn available-profs
@@ -121,6 +122,23 @@
               name)
      (render-effort name (:effort project) all-profs)]))
 
+(defn params-to-config
+  [params]
+  {:context (get params "context")
+   :constants (let [const-params (get params "constants")
+                    ks (map keyword (keys const-params))
+                    vs (map edn/read-string (vals const-params))]
+                (zipmap ks vs))
+   :profs (let [prof-params (get params "profs")
+                ks (map keyword (keys prof-params))
+                vs (map #(-> (map (comp keyword s/trim)
+                                  (s/split % #","))
+                             set)
+                        (vals prof-params))]
+            (zipmap ks vs))
+   :contrib "NOTHING"
+   :projects "NOTHING"})
+
 (defn with-response [resp]
   (-> (response (h/html (t/template resp)))
       (content-type "text/html")
@@ -163,9 +181,9 @@
      (fn [{config-name :config-name}]
        (with-response [:div
                        [:p (str "Saved config " config-name)]
-                       [:p (str (-> request
-                                    nested-params-request
-                                    :params))]]))
+                       [:p (str (params-to-config  (-> request
+                                                       nested-params-request
+                                                       :params)))]]))
      (-> (response "Page not found")
          (status 404)))))
 
