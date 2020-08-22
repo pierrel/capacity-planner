@@ -57,10 +57,14 @@
              eng-profs)))
 
 (defn render-contrib-iter-inputs
-  [contrib-iter]
-  (map #(let [[eng contrib] %]
+  [iteration contrib-iter]
+  (map #(let [[eng contrib] %
+              eng-name (name eng)]
           (t/input "input"
-                   (name eng)
+                   eng-name
+                   (format "contrib[%d][%s]"
+                           iteration
+                           eng-name)
                    contrib))
        contrib-iter))
 
@@ -68,7 +72,7 @@
   [iteration contrib-iter]
   (into [:fieldset
          [:legend (str "Iteration " iteration)]]
-        (render-contrib-iter-inputs contrib-iter)))
+        (render-contrib-iter-inputs iteration contrib-iter)))
 
 (defn render-contribs
   [& contribs]
@@ -78,33 +82,34 @@
              (utils/group-interleave (range) contribs))))
 
 (defn render-prof-val
-  [name-prefix prof value]
+  [project-name prof value]
   (t/input "input"
-           (format "%s effort" (name prof))
-           (format "%s-%s" name-prefix (name prof))
+           (format "%s effort" prof)
+           (format "project[%s][effort][%s]"
+                   project-name
+                   prof)
            value))
 
 (defn render-effort
-  [project-number effort all-profs]
-  (map (partial apply render-prof-val)
-       (map (fn [[n prof]]
-              [(format "project-%d-effort-" n)
-               prof
-               (or (prof effort) 0)])
-        (utils/group-interleave (repeat project-number) all-profs))))
+  [project-name effort all-profs]
+  (map #(render-prof-val project-name
+                         (name %)
+                         (or (effort %) 0))
+       all-profs))
 
 (defn render-project
   [number project all-profs]
-  [:fieldset (:name project)
-   (t/input "input"
-            "Rank"
-            (format "project-%d-rank" number)
-            number)
-   (t/input "input"
-            "Name"
-            (format "project-%d-name" number)
-            (:name project))
-   (render-effort number (:effort project) all-profs)])
+  (let [{name :name} project]
+    [:fieldset name
+     (t/input "input"
+              "Rank"
+              (format "project[%s][rank]" name)
+              number)
+     (t/input "input"
+              "Name"
+              (format "project[%s][name]" name)
+              name)
+     (render-effort name (:effort project) all-profs)]))
 
 (defn with-response [resp]
   (-> (response (h/html (t/template resp)))
