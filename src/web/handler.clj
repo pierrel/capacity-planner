@@ -136,8 +136,24 @@
                              set)
                         (vals prof-params))]
             (zipmap ks vs))
-   :contrib "NOTHING"
-   :projects "NOTHING"})
+   :contrib (let [contrib-params (get params "contrib")
+                  param-order (sort (map edn/read-string
+                                         (keys contrib-params)))
+                  sorted-contrib (map #(get contrib-params (str %))
+                                      param-order)]
+              (map (fn [contrib]
+                     (zipmap (map keyword (keys contrib))
+                             (map edn/read-string (vals contrib))))
+                   sorted-contrib))
+   :projects (let [sorted (sort-by #(edn/read-string (get % "rank"))
+                                   (vals (get params "projects")))]
+               (map #(hash-map :name (get % "name")
+                               :effort (let [effort (get % "effort")]
+                                         (zipmap (map keyword
+                                                      (keys effort))
+                                                 (map edn/read-string
+                                                      (vals effort)))))
+                    sorted))})
 
 (defn with-response [resp]
   (-> (response (h/html (t/template resp)))
