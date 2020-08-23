@@ -96,7 +96,7 @@
   [project-name prof value]
   (t/input "input"
            (format "%s effort" prof)
-           (format "project[%s][effort][%s]"
+           (format "projects[%s][effort][%s]"
                    project-name
                    prof)
            value))
@@ -114,11 +114,11 @@
     [:fieldset name
      (t/input "input"
               "Rank"
-              (format "project[%s][rank]" name)
+              (format "projects[%s][rank]" name)
               number)
      (t/input "input"
               "Name"
-              (format "project[%s][name]" name)
+              (format "projects[%s][name]" name)
               name)
      (render-effort name (:effort project) all-profs)]))
 
