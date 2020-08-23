@@ -148,8 +148,8 @@
          (apply utils/group-interleave res-w-teams))))
 
 (defn input
-  [config-from-file config-name]
-  [:form {:action (format "/input/%s/submit" config-name)
+  [config-from-file config-name action]
+  [:form {:action action
           :method "POST"}
    [:button "Submit"]
    (t/input "input"
