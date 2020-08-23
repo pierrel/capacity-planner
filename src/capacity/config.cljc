@@ -72,8 +72,19 @@
   (with-open [r (clojure.java.io/reader file-or-filename)]
     (clojure.edn/read (java.io.PushbackReader. r))))
 
-(defn to-models [file-or-filename]
-  (let [conf       (validate (read file-or-filename))
+(defn to-models
+  "Returns the records [`backlog`, `iterations`]
+
+  `backlog` is a list of `Project`
+  `iterations` is a list of lists of `Eng`
+
+  `file-filename-or-config` can be a file/filename containing the config or a
+  config map."
+  [file-filename-or-config]
+  (let [conf       (validate
+                    (if (map? file-filename-or-config)
+                      file-filename-or-config
+                      (read file-filename-or-config)))
         const      (:constants conf)
         profs      (:profs conf)
         points     (* (:sprints const)
