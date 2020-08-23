@@ -198,9 +198,14 @@
        (let [conf (params-to-config (-> request
                                         nested-params-request
                                         :params))]
-         (with-response [:div
-                         [:p (str "Saved config " config-name)]
-                         [:p (str conf)]])))
+         (with-response
+           (into [:div]
+                 (try
+                   [[:p (str "Saved config " config-name)]
+                    [:p (str (config/validate conf))]]
+                   (catch RuntimeException e
+                     [[:p "Could not save config."]
+                      [:p (.getMessage e)]]))))))
      (-> (response "Page not found")
          (status 404)))))
 
