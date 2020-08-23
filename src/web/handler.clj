@@ -195,11 +195,12 @@
 
      "/input/{config-name}/submit" ;; change this to be a POST
      (fn [{config-name :config-name}]
-       (with-response [:div
-                       [:p (str "Saved config " config-name)]
-                       [:p (str (params-to-config  (-> request
-                                                       nested-params-request
-                                                       :params)))]]))
+       (let [conf (params-to-config (-> request
+                                        nested-params-request
+                                        :params))]
+         (with-response [:div
+                         [:p (str "Saved config " config-name)]
+                         [:p (str conf)]])))
      (-> (response "Page not found")
          (status 404)))))
 
