@@ -1,7 +1,11 @@
 {:deps
  {org.clojure/clojure {:mvn/version "1.10.1"}
+  org.clojure/clojurescript {:mvn/version "1.10.773"}
   ring {:mvn/version "1.8.0"}
-  hiccup {:mvn/version "1.0.5"}}
+  hiccup {:mvn/version "1.0.5"}
+  me.raynes/fs {:mvn/version "1.4.6"}}
+ :paths ["src" "resources" "classes"]
 
  :aliases
- {:dev {:extra-paths ["test" "utils"]}}}
+ {:dev {:extra-paths ["test" "utils"]
+        :extra-deps {weasel {:mvn/version "0.7.1"}}}}}

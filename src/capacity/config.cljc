@@ -1,8 +1,9 @@
 (ns capacity.config
-  (:require [capacity.core :as models]
+  (:require #?(:clj [capacity.core :as models]
+               :cljs [capacity.core :as models :refer [Eng Project]])
             [capacity.validation :as validation]
             [clojure.set :as s])
-  (:import [capacity.core Eng Project]))
+  #?(:clj (:import [capacity.core Eng Project])))
 
 (def validations
   [;; constants
