@@ -40,9 +40,9 @@
 
      "/{config-name}/submit" ;; change this to be a POST
      (fn [{config-name :config-name}]
-       (let [conf (params-to-config (-> request
-                                        nested-params-request
-                                        :params))]
+       (let [conf (config-view/params-to-config (-> request
+                                                    nested-params-request
+                                                    :params))]
          (try
            (-> conf config-view/output with-response)
            (catch RuntimeException e
