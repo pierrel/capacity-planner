@@ -27,10 +27,11 @@
 
 (defn app [dev?]
   (if dev?
-    (-> #'handler/app wrap-file wrap-reload)
+    (wrap-reload (wrap-file #'handler/app resources-dir))
     #'handler/app))
 
 (defn run-server
   "Runs and returns the server"
   [port block? dev?]
+  (if dev? dev-build-cljs prod-build-cljs)
   (run-jetty (app dev?) {:port port :join? block?}))

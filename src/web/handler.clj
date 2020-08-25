@@ -55,5 +55,5 @@
      (-> (response "Page not found")
          (status 404)))))
 
-(def app (wrap-params routes))
+(def app (wrap-resource (wrap-params routes) "public"))
 
