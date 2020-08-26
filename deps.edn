@@ -8,4 +8,4 @@
 
  :aliases
  {:dev {:extra-paths ["test" "utils"]
-        :extra-deps {weasel {:mvn/version "0.7.1"}}}}}
+        :extra-deps {weasel {:local/root "libs/weasel-0.7.1-standalone.jar"}}}}}
