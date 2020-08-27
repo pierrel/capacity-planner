@@ -16,7 +16,41 @@
   [config config-name]
   (config-view/input config
                      config-name
-                     (format "/%s/submit" config-name)))
+                     (format "/%s/submit" config-name)
+                     (format "/%s/add-project" config-name)))
+
+(defn submit-route
+  [request params config-name]
+  (let [conf (config-view/params-to-config (-> request
+                                               nested-params-request
+                                               :params))]
+    (if-let [change-param (get params "config-change")]
+      (with-response
+        (input-view
+         (case change-param
+           "Add Project" (let [projects (:projects conf)
+                               new-project {:name (get params "new-project")
+                                            :effort {}}]
+                           (println (str new-project))
+                           (assoc conf
+                                  :projects
+                                  (conj projects new-project)))
+           "Add Engineer" (let [profs (:profs conf)
+                                new-eng (keyword
+                                         (get params "new-engineer"))]
+                            (assoc conf ;; probably can use update-in
+                                   :profs
+                                   (assoc profs new-eng #{}))))
+         config-name))
+      (try
+        (-> conf config-view/output with-response)
+        (catch RuntimeException e
+          (with-response 422
+            [:div
+             [:div.error
+              [:p "Could not run config."]
+              [:p (.getMessage e)]]
+             (input-view conf config-name)]))))))
 
 (defn with-response
   ([status-code resp]
@@ -38,20 +72,10 @@
            (input-view config
                        config-name))))
 
-     "/{config-name}/submit" ;; change this to be a POST
+     "/{config-name}/submit"
      (fn [{config-name :config-name}]
-       (let [conf (config-view/params-to-config (-> request
-                                                    nested-params-request
-                                                    :params))]
-         (try
-           (-> conf config-view/output with-response)
-           (catch RuntimeException e
-             (with-response 422
-               [:div
-                [:div.error
-                 [:p "Could not run config."]
-                 [:p (.getMessage e)]]
-                (input-view conf config-name)])))))
+       (submit-route request params config-name))
+
      (-> (response "Page not found")
          (status 404)))))
 

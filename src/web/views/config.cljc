@@ -84,16 +84,27 @@
 (defn render-project
   [number project all-profs]
   (let [{name :name} project]
-    [:fieldset name
-     (t/input "input"
-              "Rank"
-              (format "projects[%s][rank]" name)
-              number)
+    [:fieldset.project name
+     (if (nil? number)
+       [:span]
+       (t/input "input"
+                "Rank"
+                (format "projects[%s][rank]" name)
+                number))
      (t/input "input"
               "Name"
               (format "projects[%s][name]" name)
               name)
      (render-effort name (:effort project) all-profs)]))
+
+(defn param-to-project
+  [project-params]
+  {:name (get project-params "name")
+   :effort (let [effort (get project-params "effort")]
+             (zipmap (map keyword
+                          (keys effort))
+                     (map edn/read-string
+                          (vals effort))))})
 
 (defn params-to-config
   [params]
@@ -120,13 +131,7 @@
                    sorted-contrib))
    :projects (let [sorted (sort-by #(edn/read-string (get % "rank"))
                                    (vals (get params "projects")))]
-               (map #(hash-map :name (get % "name")
-                               :effort (let [effort (get % "effort")]
-                                         (zipmap (map keyword
-                                                      (keys effort))
-                                                 (map edn/read-string
-                                                      (vals effort)))))
-                    sorted))})
+               (map param-to-project sorted))})
 
 (defn available-profs
   [config]
@@ -148,26 +153,43 @@
          (apply utils/group-interleave res-w-teams))))
 
 (defn input
-  [config-from-file config-name action]
-  [:form {:action action
-          :method "POST"}
-   [:button "Submit"]
-   (t/input "input"
-            "Context"
-            "context"
-            (:context config-from-file))
-   (apply render-constants-inputs
-          (map (:constants config-from-file)
-               [:sprints :unplanned :velocity]))
-   (render-profs-inputs (:profs config-from-file))
-   (render-contribs (:contrib config-from-file)
-                    (available-engs config-from-file))
-   (into [:fieldset "Projects"]
-         (map #(render-project (first %)
-                               (last %)
-                               (available-profs config-from-file))
-              (utils/group-interleave (range)
-                                      (:projects config-from-file))))])
+  [config-from-file config-name submit-action new-project-action]
+  (let [profs (available-profs config-from-file)
+        engs (available-engs config-from-file)]
+    [:form {:action submit-action
+            :method "POST"}
+     [:fieldset [:legend "Add"]
+      [:input {:type "input"
+               :name "new-project"
+               :value "New project"}]
+      [:input {:type "submit"
+               :name "config-change"
+               :value "Add Project"}]
+      [:br]
+      [:input {:type "input"
+               :name "new-engineer"
+               :value "New Engineer"}]
+      [:input {:type "submit"
+               :name "config-change"
+               :value "Add Engineer"}]]
+     [:button "Submit"]
+     (t/input "input"
+              "Context"
+              "context"
+              (:context config-from-file))
+     (apply render-constants-inputs
+            (map (:constants config-from-file)
+                 [:sprints :unplanned :velocity]))
+     (render-profs-inputs (:profs config-from-file))
+     (render-contribs (:contrib config-from-file)
+                      engs)
+     (into [:fieldset.projects "Projects"]
+           (map #(render-project (first %)
+                                 (last %)
+                                 profs)
+                (utils/group-interleave (range)
+                                        (:projects config-from-file))))
+     [:button "Submit"]]))
 
 (defn output
   [conf]
