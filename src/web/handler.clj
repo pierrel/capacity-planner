@@ -40,7 +40,7 @@
                                          (get params "new-engineer"))]
                             (assoc conf ;; probably can use update-in
                                    :profs
-                                   (assoc profs new-eng #{}))))
+                                   (assoc profs new-eng #{:prof}))))
          config-name))
       (try
         (-> conf config-view/output with-response)
