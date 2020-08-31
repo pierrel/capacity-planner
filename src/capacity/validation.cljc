@@ -3,15 +3,22 @@
 (defn validation-error
   "Throws a RuntimeException with the given messages."
   [form messages]
-  (throw (RuntimeException. (apply str
-                                   (concat (str (count messages))
-                                           (str " Validation errors:\n")
-                                           (interleave
-                                            (map #(str (inc %) ". ")
-                                                 (range))
-                                            messages
-                                            (repeat "\n"))
-                                           (str "\nFrom form \n" form))))))
+  (throw (ex-info "Validation errors"
+                  {:form form
+                   :messages messages})))
+
+(defn validation-message
+  [exception]
+  (let [[form messages] (map (ex-data exception) [:form :messages])]
+    (apply str
+           (concat (str (count messages))
+                   (str " Validation errors:\n")
+                   (interleave
+                    (map #(str (inc %) ". ")
+                         (range))
+                    messages
+                    (repeat "\n"))
+                   (str "\nFrom form \n" form)))))
 
 (defn valid-by?
   "Runs the `validation` (finder and validator) on the `form`."

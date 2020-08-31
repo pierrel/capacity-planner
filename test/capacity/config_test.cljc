@@ -21,7 +21,7 @@
 (t/deftest validate
   (t/is (map? (sut/validate sample)))
   (t/is (thrown-with-msg? RuntimeException
-                          #"effort that is not a proficiency"
+                          #"Validation errors"
                           (sut/validate (update-in sample
                                                    [:projects 0 :effort]
                                                    #(assoc % :meme 10))))))
