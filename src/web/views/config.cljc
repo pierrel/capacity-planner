@@ -133,6 +133,25 @@
                                    (vals (get params "projects")))]
                (map param-to-project sorted))})
 
+(defn add-params
+  [config params]
+  (if-let [change-param (get params "config-change")]
+    (case change-param
+      "Add Project" (let [projects (:projects config)
+                          new-project {:name (get params "new-project")
+                                       :effort {}}]
+                      (assoc config
+                             :projects
+                             (conj projects new-project)))
+      "Add Engineer" (let [profs (:profs config)
+                           new-eng (keyword
+                                    (get params "new-engineer"))]
+                       (assoc config ;; probably can use update-in
+                              :profs
+                              (assoc profs new-eng #{:prof})))
+      config)
+    config))
+
 (defn available-profs
   [config]
   (apply st/union
@@ -153,11 +172,11 @@
          (apply utils/group-interleave res-w-teams))))
 
 (defn input
-  [config-from-file config-name submit-action new-project-action]
+  [config-from-file config-name submit-action]
   (let [profs (available-profs config-from-file)
         engs (available-engs config-from-file)]
     [:form {:action submit-action
-            :method "POST"}
+            :method "POST"} ;; TODO: try with GET
      [:fieldset [:legend "Add"]
       [:input {:type "input"
                :name "new-project"
