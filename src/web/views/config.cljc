@@ -149,6 +149,13 @@
                        (assoc config ;; probably can use update-in
                               :profs
                               (assoc profs new-eng #{:prof})))
+      "Add Iteration" (let [engs (-> config :profs keys)
+                            iters (-> config :contrib vec)
+                            new-iter (zipmap engs (repeat 0))
+                            new-iters (conj iters new-iter)]
+                        (assoc config
+                               :contrib
+                               new-iters))
       config)
     config))
 
@@ -190,7 +197,11 @@
                :value "New Engineer"}]
       [:input {:type "submit"
                :name "config-change"
-               :value "Add Engineer"}]]
+               :value "Add Engineer"}]
+      [:br]
+      [:input {:type "submit"
+               :name "config-change"
+               :value "Add Iteration"}]]
      [:button "Submit"]
      (t/input "input"
               "Context"
