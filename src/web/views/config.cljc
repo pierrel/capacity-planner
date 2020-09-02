@@ -167,8 +167,8 @@
 
 
 (defn with-removed
-  "Takes `parts-indices` a map of `config` key->index to be removed from the same
-  key (keyword) in config at indices."
+  "Takes `parts-indices` a map of `config` key->list of indices to be removed from
+  the same key (keyword) in config at indices."
   [parts-indices config]
   (reduce (fn [config [part indices]]
             (let [kpart (keyword part)
