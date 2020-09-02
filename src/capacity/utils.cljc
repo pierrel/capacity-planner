@@ -29,3 +29,17 @@
   [x n coll]
   (let [[before after] (split-at n coll)]
     (concat before (cons x after))))
+
+(defn- update-to-nil
+  "Replaces all elements in `coll` at `indices` with nil."
+  [coll indices]
+  (let [lookup (zipmap indices (repeat true))]
+    (map-indexed (fn [i el]
+                   (if (get lookup i false)
+                     nil
+                     el))
+                 coll)))
+
+(defn remove-from
+  [coll indices]
+  (remove nil? (update-to-nil coll indices)))

@@ -165,19 +165,6 @@
       config)
     config))
 
-(defn- update-to-nil
-  "Replaces all elements in `coll` at `indices` with nil."
-  [coll indices]
-  (let [lookup (zipmap indices (repeat true))]
-    (map-indexed (fn [i el]
-                   (if (get lookup i)
-                     nil
-                     el))
-                 coll)))
-
-(defn remove-from
-  [coll indices]
-  (remove nil? (update-to-nil coll indices)))
 
 (defn with-removed
   "Takes `parts-indices` a map of `config` key->index to be removed from the same
@@ -186,7 +173,7 @@
   (reduce (fn [config [part indices]]
             (let [kpart (keyword part)
                   before (get config kpart)
-                  after (remove-from before indices)]
+                  after (utils/remove-from before indices)]
               (assoc config kpart after)))
           config
           parts-indices))
