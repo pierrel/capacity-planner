@@ -184,21 +184,29 @@
   [coll indices]
   (remove nil? (update-to-nil coll indices)))
 
+(defn with-removed
+  "Takes `parts-indices` a map of `config` key->index to be removed from the same
+  key (keyword) in config at indices."
+  [parts-indices config]
+  (reduce (fn [config [part indices]]
+            (let [kpart (keyword part)
+                  before (get config kpart)
+                  after (remove-from before indices)]
+              (assoc config kpart after)))
+          config
+          parts-indices))
+
 (defn remove-params
   [config params]
   (if-let [change-param (get params "remove")]
-    (let [contrib (:contrib config)
-          contrib-removals (map edn/read-string
-                                (keys (get change-param "contrib" {})))
-          new-contrib (remove-from contrib contrib-removals)
-
-          projects (:projects config)
-          project-removals (map edn/read-string
-                                (keys (get change-param "projects" {})))
-          new-projects (remove-from projects project-removals)]
-      (assoc config
-             :contrib new-contrib
-             :projects new-projects))
+    (with-removed
+      (reduce (fn [res [part dparam]]
+                (assoc res
+                       part
+                       (map edn/read-string (keys dparam))))
+              {}
+              change-param)
+      config)
     config))
 
 (defn available-profs
