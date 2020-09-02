@@ -40,15 +40,16 @@
 
 (defn submit-route
   [request params config-name]
-  (let [conf (config-view/params-to-config
-              (-> request
-                  nested-params-request
-                  :params))]
-    (if-let [change-param (get params "config-change")]
+  (let [nparams (-> request
+                    nested-params-request
+                    :params)
+        conf (config-view/params-to-config nparams)]
+    (if (or (get nparams "config-change")
+            (get nparams "remove"))
       (with-response
         (try
           (input-view
-           (pre-validate (config-view/add-params conf params))
+           (pre-validate (config-view/update-params conf nparams))
            config-name)
           (catch RuntimeException e
             [:div.errors

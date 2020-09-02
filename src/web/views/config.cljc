@@ -40,15 +40,18 @@
 
 (defn render-contrib-iter-inputs
   [iteration contrib-iter all-engs]
-  (map #(let [eng %
-              eng-name (name eng)]
-          (t/input "input"
-                   eng-name
-                   (format "contrib[%d][%s]"
-                           iteration
-                           eng-name)
-                   (get contrib-iter eng 0)))
-       all-engs))
+  (into (list [:input {:type "submit"
+                       :name (format "remove[contrib][%d]" iteration)
+                       :value "Remove"}])
+        (map #(let [eng %
+                    eng-name (name eng)]
+                (t/input "input"
+                         eng-name
+                         (format "contrib[%d][%s]"
+                                 iteration
+                                 eng-name)
+                         (get contrib-iter eng 0)))
+             all-engs)))
 
 (defn render-contrib-iter
   [iteration contrib-iter all-engs]
@@ -95,7 +98,10 @@
               "Name"
               (format "projects[%s][name]" name)
               name)
-     (render-effort name (:effort project) all-profs)]))
+     (render-effort name (:effort project) all-profs)
+     [:input {:type "submit"
+              :name (format "remove[projects][%d]" number)
+              :value "Remove"}]]))
 
 (defn param-to-project
   [project-params]
@@ -133,6 +139,11 @@
                                    (vals (get params "projects")))]
                (map param-to-project sorted))})
 
+(defn update-params
+  [config params]
+  (remove-params (add-params config params)
+                 params))
+
 (defn add-params
   [config params]
   (if-let [change-param (get params "config-change")]
@@ -157,6 +168,37 @@
                                :contrib
                                new-iters))
       config)
+    config))
+
+(defn- update-to-nil
+  "Replaces all elements in `coll` at `indices` with nil."
+  [coll indices]
+  (let [lookup (zipmap indices (repeat true))]
+    (map-indexed (fn [i el]
+                   (if (get lookup i)
+                     nil
+                     el))
+                 coll)))
+
+(defn remove-from
+  [coll indices]
+  (remove nil? (update-to-nil coll indices)))
+
+(defn remove-params
+  [config params]
+  (if-let [change-param (get params "remove")]
+    (let [contrib (:contrib config)
+          contrib-removals (map edn/read-string
+                                (keys (get change-param "contrib" {})))
+          new-contrib (remove-from contrib contrib-removals)
+
+          projects (:projects config)
+          project-removals (map edn/read-string
+                                (keys (get change-param "projects" {})))
+          new-projects (remove-from projects project-removals)]
+      (assoc config
+             :contrib new-contrib
+             :projects new-projects))
     config))
 
 (defn available-profs
