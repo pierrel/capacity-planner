@@ -139,11 +139,6 @@
                                    (vals (get params "projects")))]
                (map param-to-project sorted))})
 
-(defn update-params
-  [config params]
-  (remove-params (add-params config params)
-                 params))
-
 (defn add-params
   [config params]
   (if-let [change-param (get params "config-change")]
@@ -208,6 +203,11 @@
               change-param)
       config)
     config))
+
+(defn update-params
+  [config params]
+  (remove-params (add-params config params)
+                 params))
 
 (defn available-profs
   [config]
