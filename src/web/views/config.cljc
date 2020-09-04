@@ -241,7 +241,7 @@
         engs (available-engs config-from-file)
         projects (available-projects config-from-file)]
     [:form {:action submit-action
-            :method "POST"} ;; TODO: try with GET
+            :method "GET"}
      [:fieldset [:legend "Add"]
       [:input {:type "input"
                :name "new-project"
