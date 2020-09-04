@@ -208,6 +208,33 @@
                                           (-> config :contrib)))]
     (st/union from-contrib from-profs)))
 
+(defn available-projects
+  [config]
+  (map :name (:projects config)))
+
+(defn- numbered-unique
+  ([base taken format-str]
+   (utils/with-lookup [lookup taken]
+     (if (get lookup base)
+       (loop [num 1]
+         (let [check (format format-str base num)]
+           (if (get lookup check)
+             (recur (inc num))
+             check)))
+       base)))
+  ([base taken]
+   (numbered-unique base taken "%s %d")))
+
+(defn new-project-name
+  [all-project-names]
+  (numbered-unique "New project" all-project-names))
+
+(defn new-eng-name
+  [all-eng-names]
+  (keyword (numbered-unique "engineer"
+                            (map name all-eng-names)
+                            "%s%d")))
+
 (defn summarize-config [filename-or-config]
   (let [[backlog teams] (config/to-models filename-or-config)
         res (rest (core/work-backlog-iter backlog teams))
@@ -218,20 +245,21 @@
 (defn input
   [config-from-file config-name submit-action]
   (let [profs (available-profs config-from-file)
-        engs (available-engs config-from-file)]
+        engs (available-engs config-from-file)
+        projects (available-projects config-from-file)]
     [:form {:action submit-action
             :method "POST"} ;; TODO: try with GET
      [:fieldset [:legend "Add"]
       [:input {:type "input"
                :name "new-project"
-               :value "New project"}]
+               :value (new-project-name projects)}]
       [:input {:type "submit"
                :name "config-change"
                :value "Add Project"}]
       [:br]
       [:input {:type "input"
                :name "new-engineer"
-               :value "New Engineer"}]
+               :value (new-eng-name engs)}]
       [:input {:type "submit"
                :name "config-change"
                :value "Add Engineer"}]
