@@ -52,6 +52,10 @@
   (zipmap coll (repeat true)))
 
 (defmacro with-lookup
+  "Evaluates `forms` in the lexical context of `bindings` in which init-exprs are converted to maps.
+
+  Similar to `let`, but converts colls to a map where each element is associated
+  to true for efficient lookup."
   [bindings & forms]
   (let [parted (partition 2 bindings)
         bsym (map first parted)
