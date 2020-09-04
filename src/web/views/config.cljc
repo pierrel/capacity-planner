@@ -235,13 +235,6 @@
                             (map name all-eng-names)
                             "%s%d")))
 
-(defn summarize-config [filename-or-config]
-  (let [[backlog teams] (config/to-models filename-or-config)
-        res (rest (core/work-backlog-iter backlog teams))
-        res-w-teams (utils/insert teams 2 res)]
-    (map (partial apply report/full-summary)
-         (apply utils/group-interleave res-w-teams))))
-
 (defn input
   [config-from-file config-name submit-action]
   (let [profs (available-profs config-from-file)
@@ -286,8 +279,4 @@
                                         (:projects config-from-file))))
      [:button "Submit"]]))
 
-(defn output
-  [conf]
-  (map (comp t/section render-summary)
-       (summarize-config conf)))
 

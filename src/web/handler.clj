@@ -10,6 +10,7 @@
             [web.router :as router]
             [web.templates :as t]
             [web.views.config :as config-view]
+            [web.views.output :as output-view]
             [hiccup.core :as h])
   (:import [capacity.core Eng Project]))
 
@@ -59,7 +60,7 @@
                    (mapv #(vector :li %) (:messages (ex-data e))))
              (input-view conf config-name)])))
       (try
-        (-> conf config-view/output with-response)
+        (-> conf output-view/summary with-response)
         (catch RuntimeException e
           (with-response 422
             [:div
