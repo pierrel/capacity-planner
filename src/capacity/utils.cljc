@@ -41,5 +41,21 @@
                  coll)))
 
 (defn remove-from
+  "Removes elements at `indices` from `coll`.
+
+  Assumes that none of the elements are nil."
   [coll indices]
   (remove nil? (update-to-nil coll indices)))
+
+(defn- to-lookup
+  [coll]
+  (zipmap coll (repeat true)))
+
+(defmacro with-lookup
+  [bindings & forms]
+  (let [parted (partition 2 bindings)
+        bsym (map first parted)
+        bcoll (mapv #(list to-lookup %) (map last parted))
+        reformed (vec (interleave bsym bcoll))]
+    `(let ~reformed
+       ~@forms)))

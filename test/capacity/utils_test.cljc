@@ -50,3 +50,10 @@
 
              ['(0 1 2) [2]]
              '(0 1)))
+
+(t/deftest with-lookup
+  (sut/with-lookup [l [:a :b :c]]
+    (t/is (= true
+             (get l :a)))
+    (t/is (= false
+             (get l :z false)))))
