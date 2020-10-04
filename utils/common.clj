@@ -11,21 +11,25 @@
 (def resources-dir (str top-resources "/public"))
 (def js-file "repl.js")
 
+(defn refresh-resources
+  "Destroys and creates the appropriate resources."
+  []
+  (println "Deleting resources")
+  (fs/delete-dir top-resources)
+  (println "Re-creating resources")
+  (fs/mkdirs resources-dir))
+
 (defn build-cljs [opts]
   (cljsc/build "src"
                opts))
 
-(defn prod-build-cljs []
-  (build-cljs {:main          'web.js.core
-               :output-to     "resources/public/js/main.js"
-               :optimizations :advanced}))
-
 (defn dev-build-cljs []
-  (fs/delete-dir top-resources)
+  (println "Generating dev js")
   (build-cljs {:output-to  (str resources-dir "/" js-file)
                :output-dir resources-dir}))
 
 (defn app [dev?]
+  (refresh-resources)
   (if dev?
     (wrap-reload (wrap-file #'handler/app resources-dir))
     #'handler/app))
