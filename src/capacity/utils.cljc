@@ -20,6 +20,10 @@
              unordered)))
 
 (defn group-interleave
+  "Take a coll of colls and interleaves the elements:
+
+  [[a b c] [1 2 3]] -> [[a 1] [b 2] [c 3]]
+  [[a b c d] [1 2 3] [f g h]] -> [[a 1 f] [b 2 g] [c 3 h]]"
   [& colls]
   (partition (count colls)
              (apply interleave colls)))
