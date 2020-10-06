@@ -10,7 +10,11 @@
   [:div
    [:h2 heading]
    [:ul
-    (map #(vector :li %) lst)]])
+    (map (fn [[project change]]
+           [:li (format "Project: %s, diff: %s"
+                        (:name project)
+                        (-> change :diff str))])
+         lst)]])
 
 (defn render-summary [summary]
   (map #(render-summary-item (-> % first name) (last %)) summary))
@@ -19,7 +23,7 @@
   (let [[backlog teams] (config/to-models filename-or-config)
         res (rest (core/work-backlog-iter backlog teams))
         res-w-teams (utils/insert teams 2 res)]
-    (map (partial apply report/full-summary)
+    (map (partial apply report/full-summary-struct)
          (apply utils/group-interleave res-w-teams))))
 
 (defn summary

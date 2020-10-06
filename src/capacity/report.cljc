@@ -19,6 +19,36 @@
   (every? zero? (map last (merge-with +
                                       (get original key)
                                       (:diff summary)))))
+;; TODO: Remove the "struct" from these versions and refactor the non-struct version to have something like "formatted" or "str"
+(defn summarize-struct
+  "A structured summary"
+  [filt original summary]
+  (filter #(apply filt %)
+          (utils/group-interleave original summary)))
+
+(defn full-summary-struct
+  "A structured full summary"
+  [iter-backlog backlog-summary iter-team team-summary]
+  {:completed (summarize-struct #(and (progressed :effort
+                                                  %1
+                                                  %2)
+                                      (completed :effort
+                                                 %1
+                                                 %2))
+                                iter-backlog
+                                backlog-summary)
+   :progressed (summarize-struct #(and (progressed :effort
+                                                   %1
+                                                   %2)
+                                       (not
+                                        (completed :effort
+                                                   %1
+                                                   %2)))
+                                 iter-backlog
+                                 backlog-summary)
+   :leftover (summarize-struct (partial remaining :capacity)
+                               iter-team
+                               team-summary)})
 
 (defn format-summary [summary]
   (format "%s (%.2f)"
