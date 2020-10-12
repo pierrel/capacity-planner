@@ -13,5 +13,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: DeLaGuardo/setup-clojure@master
+      with:
+        # To use Clojure CLI 1.10.1.561 based on tools.deps
+        cli: '1.10.1.469'
     - name: Run tests
       run: ./scripts/test
