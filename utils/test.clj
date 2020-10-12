@@ -17,5 +17,7 @@
         files (filter test-file?
                       (file-seq directory))]
     (load-return-failures files)
-    (t/run-all-tests)))
+    (System/exit (if (t/successful? (t/run-all-tests))
+                    0
+                    1))))
 
