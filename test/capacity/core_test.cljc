@@ -3,7 +3,7 @@
             #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true]))
   (:use [capacity.test-utils])
-  (:import [capacity.core Eng Project]))
+  (:import [capacity.core Eng Project Change]))
 
 (t/deftest capacity-to-points
   (are-equal sut/capacity-to-points
@@ -160,22 +160,29 @@
                      (Eng. :pierre #{} 10)]
                     {:capacity 6}))
 
-(t/deftest summarize
-  (are-equal sut/summarize
+(sut/summarize-all [(Project. :med {:app 10 :web 10})
+                    (Project. :large {:app 15 :web 20})]
+                   [(Project. :med {:app 5 :web 5})
+                    (Project. :large {:app 0 :web 3})]
+                   [(Project. :med {:app 10 :web 10})
+                    (Project. :large {:app 15 :web 20})])
+
+(t/deftest summarize-all
+  (are-equal sut/summarize-all
                     [[(Project. :med {:app 10 :web 10})
                       (Project. :large {:app 15 :web 20})]
                      [(Project. :med {:app 5 :web 5})
                       (Project. :large {:app 0 :web 3})]
                      [(Project. :med {:app 10 :web 10})
                       (Project. :large {:app 15 :web 20})]]
-                    [{:name :med
-                      :check true
-                      :diff {:app -5 :web -5}
-                      :ratio 1/2}
-                     {:name :large
-                      :check true
-                      :diff {:app -15 :web -17}
-                      :ratio 32/35}]
+                    [(Change. :med
+                              true
+                              {:app -5 :web -5}
+                              1/2)
+                     (Change. :large
+                              true
+                              {:app -15 :web -17}
+                              32/35)]
 
                     [[(Eng. :josh #{} 10)
                       (Eng. :jess #{} 5)]
@@ -183,14 +190,21 @@
                       (Eng. :jess #{} 3)]
                      [(Eng. :josh #{} 10)
                       (Eng. :jess #{} 5)]]
-                    [{:name :josh
-                      :check true
-                      :diff {:capacity -10}
-                      :ratio 1}
-                     {:name :jess
-                      :check true
-                      :diff {:capacity -2}
-                      :ratio 2/5}]))
+                    [(Change. :josh
+                              true
+                              {:capacity -10}
+                              1)
+                     (Change. :jess
+                              true
+                              {:capacity -2}
+                              2/5)]))
+
+(sut/work-backlog-iter [(Project. :med {:app 10 :web 10})
+                        (Project. :large {:app 15 :web 20})]
+                       [[(Eng. :pierre #{:app :web} 10)
+                         (Eng. :jan #{:web} 5)]
+                        [(Eng. :pierre #{:app :web} 10)
+                         (Eng. :jan #{:web} 5)]])
 
 (t/deftest work-backlog-iter
   (are-equal sut/work-backlog-iter
