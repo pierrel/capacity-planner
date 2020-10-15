@@ -199,13 +199,6 @@
                               {:capacity -2}
                               2/5)]))
 
-(sut/work-backlog-iter [(Project. :med {:app 10 :web 10})
-                        (Project. :large {:app 15 :web 20})]
-                       [[(Eng. :pierre #{:app :web} 10)
-                         (Eng. :jan #{:web} 5)]
-                        [(Eng. :pierre #{:app :web} 10)
-                         (Eng. :jan #{:web} 5)]])
-
 (t/deftest work-backlog-iter
   (are-equal sut/work-backlog-iter
                     [[(Project. :med {:app 10 :web 10})
@@ -221,35 +214,36 @@
                        (Project. :large {:app 15 :web 20})]
                       [(Project. :med {:app 0 :web 5})
                        (Project. :large {:app 15 :web 20})]]
-                     ['({:name :med
-                         :check true
-                         :diff {:app -10 :web -5}
-                         :ratio 3/4}
-                        {:name :large
-                         :check true
-                         :diff {:app 0 :web 0}
-                         :ratio 0})
-                      '({:name :med
-                         :check true
-                         :diff {:app 0 :web -5}
-                         :ratio 1}
-                        {:name :large
-                         :check true
-                         :diff {:app -5 :web -5}
-                         :ratio 2/7})]
-                     ['({:name :pierre
-                         :check true
-                         :diff {:capacity -10}
-                         :ratio 1}
-                        {:name :jan
-                         :check true
-                         :diff {:capacity -5}
-                         :ratio 1})
-                      '({:name :pierre
-                         :check true
-                         :diff {:capacity -10}
-                         :ratio 1}
-                        {:name :jan
-                         :check true
-                         :diff {:capacity -5}
-                         :ratio 1})]]))
+                     [(list (Change. :med
+                                 true
+                                 {:app -10 :web -5}
+                                 3/4)
+                            (Change. :large
+                                     true
+                                     {:app 0 :web 0}
+                                     0))
+                      (list (Change. :med
+                                     true
+                                     {:app 0 :web -5}
+                                     1)
+                            (Change. :large
+                                     true
+                                     {:app -5 :web -5}
+                                     2/7))]
+                     [(list (Change. :pierre
+                                     true
+                                     {:capacity -10}
+                                     1)
+                            (Change. :jan
+                                     true
+                                     {:capacity -5}
+                                     1))
+                      (list (Change. :pierre
+                                     true
+                                     {:capacity -10}
+                                     1)
+                            (Change. :jan
+                                     true
+                                     {:capacity -5}
+                                     1))]]))
+
