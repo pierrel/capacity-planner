@@ -51,7 +51,7 @@
   [coll indices]
   (remove nil? (update-to-nil coll indices)))
 
-(defn- to-lookup
+(defn to-lookup
   [coll]
   (zipmap coll (repeat true)))
 
