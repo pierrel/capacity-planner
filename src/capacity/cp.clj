@@ -27,6 +27,90 @@
                               :web 3
                               :ios 2}}]})
 
+(defn per-eng-skill-vars
+  "Creates variables one per eng-skill and puts it in a map of maps.
+
+  Looks like the following:
+  {:abe {:ios [variable] :app [variable]}
+   :jen {:ios [variable] :app [variable]}}"
+  [solver eng-names skills]
+  (zipmap eng-names
+          (map (fn [eng-name]
+                 (zipmap skills
+                         (map (fn [skill]
+                                (.makeNumVar solver
+                                             0.0
+                                             ##Inf
+                                             (format "%s-%s"
+                                                     eng-name
+                                                     skill)))
+                              skills)))
+               eng-names)))
+
+(defn do-maps
+  "Performs `dofn` on each path in nested-maps.
+
+  For example, for {:a {:b 1 :c 2} :d 3} does:
+  (dofn [:a :b 1])
+  (dofn [:a :c 2])
+  (dofn [:d 3])"
+  [dofn nested-maps & [path]]
+  (loop [keys-left (keys nested-maps)]
+    (if (not (empty? keys-left))
+      (let [k (first keys-left)
+            v (get nested-maps k)
+            final-path (if (nil? path)
+                         [k]
+                         (conj path k))]
+        (if (map? v)
+          (do
+            (do-maps dofn v final-path)
+            (recur (rest keys-left)))
+          (do
+            (dofn (conj final-path v))
+            (recur (rest keys-left))))))))
+
+(defn all-paths
+  [nested-maps & [path paths]]
+  (loop [keys-left (keys nested-maps)
+         all-paths (if (nil? paths) [] paths)]
+    (if (not (empty? keys-left))
+      (let [k (first keys-left)
+            v (get nested-maps k)
+            current-path (if (nil? path)
+                           [k]
+                           (conj path k))]
+        (recur (rest keys-left)
+               (if (map? v)
+                 (all-paths v current-path all-paths)
+                 (conj all-paths (conj current-path v)))))
+      all-paths)))
+
+(defn map-maps
+  "Performs `dofn` on each leaf (non-map) of `maps` and returns a new map with
+  leaves replaced by the results."
+  [dofn maps]
+  (loop [paths-left paths ;; need to calculate paths
+         res maps]
+    (let [path (first paths-left)]
+      (if (nil? path)
+        res
+        (recur (rest paths-left)
+               (update-in res dofn path))))))
+
+(let [[backlog iterations] (config/to-models conf)
+      team (first iterations)
+      project (first backlog)
+      skills (apply s/union (map :profs team))
+      skill-max (:effort project)]
+  (Loader/loadNativeLibraries)
+  (let [solver (MPSolver/createSolver "GLOP")
+        eng-names (map :name team)
+        variables (per-eng-skill-vars solver eng-names skills)
+        skill-constraints ()]
+
+    ))
+
 ;; run the new solver one variable per engineer
 ;; THIS DOESNT WORK - MUST TRY ONE VARIABLE PER ENG-PROF
 (let [[backlog iterations] (config/to-models conf)
