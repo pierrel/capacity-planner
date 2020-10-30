@@ -27,25 +27,6 @@
                               :web 3
                               :ios 2}}]})
 
-(defn per-eng-skill-vars
-  "Creates variables one per eng-skill and puts it in a map of maps.
-
-  Looks like the following:
-  {:abe {:ios [variable] :app [variable]}
-   :jen {:ios [variable] :app [variable]}}"
-  [solver eng-names skills]
-  (zipmap eng-names
-          (map (fn [eng-name]
-                 (zipmap skills
-                         (map (fn [skill]
-                                (.makeNumVar solver
-                                             0.0
-                                             ##Inf
-                                             (format "%s-%s"
-                                                     eng-name
-                                                     skill)))
-                              skills)))
-               eng-names)))
 
 (defn do-maps
   "Performs `dofn` on each path in nested-maps.
@@ -70,7 +51,7 @@
             (dofn (conj final-path v))
             (recur (rest keys-left))))))))
 
-(defn all-paths
+(defn map-to-paths
   [nested-maps & [path paths]]
   (loop [keys-left (keys nested-maps)
          all-paths (if (nil? paths) [] paths)]
@@ -82,33 +63,122 @@
                            (conj path k))]
         (recur (rest keys-left)
                (if (map? v)
-                 (all-paths v current-path all-paths)
+                 (map-to-paths v current-path all-paths)
                  (conj all-paths (conj current-path v)))))
       all-paths)))
 
 (defn map-maps
-  "Performs `dofn` on each leaf (non-map) of `maps` and returns a new map with
+  "Performs `f` on each leaf (non-map) of `maps` and returns a new map with
   leaves replaced by the results."
-  [dofn maps]
-  (loop [paths-left paths ;; need to calculate paths
-         res maps]
-    (let [path (first paths-left)]
-      (if (nil? path)
-        res
-        (recur (rest paths-left)
-               (update-in res dofn path))))))
+  [f maps]
+  (loop [paths (map-to-paths maps)
+         acc maps]
+    (if (empty? paths)
+      acc
+      (let [path (first paths)]
+        (recur (rest paths)
+               (update-in acc
+                          (butlast path)
+                          (fn [_]
+                            (f path))))))))
+
+(defn variable-name
+  [eng skill]
+  (format "%s-%s" eng skill))
+
+(defn per-eng-skill-vars
+  "Creates variables one per eng-skill and puts it in a map of maps.
+
+  Looks like the following:
+  {:abe {:ios [variable] :app [variable]}
+   :jen {:ios [variable] :app [variable]}}"
+  [solver eng-names skills team-mapbyname]
+  (zipmap eng-names
+          (map (fn [eng-name]
+                 (zipmap skills
+                         (map (fn [skill]
+                                (.makeNumVar solver
+                                             0.0
+                                             (get-in team-mapbyname
+                                                     [eng-name :capacity])
+                                             (variable-name eng-name
+                                                            skill)))
+                              skills)))
+               eng-names)))
 
 (let [[backlog iterations] (config/to-models conf)
       team (first iterations)
+      team-map (zipmap (map :name team)
+                       team)
       project (first backlog)
       skills (apply s/union (map :profs team))
       skill-max (:effort project)]
   (Loader/loadNativeLibraries)
   (let [solver (MPSolver/createSolver "GLOP")
         eng-names (map :name team)
-        variables (per-eng-skill-vars solver eng-names skills)
-        skill-constraints ()]
+        variables (per-eng-skill-vars solver eng-names skills team-map)
+        skill-constraints (zipmap (keys skill-max)
+                                  (map #(.makeConstraint solver
+                                                        0.0
+                                                        (get skill-max %)
+                                                        (name %))
+                                       (keys skill-max)))
+        capacity-constraints (zipmap team
+                                     (map #(.makeConstraint solver
+                                                            0.0
+                                                            (:capacity %)
+                                                            (-> % :name name))
+                                          team))]
+    ;; skill coefficients
+    (doseq [skill (keys skill-max)]
+      (doseq [eng team]
+        (let [constraint (get skill-constraints skill)
+              variable (get-in variables [(:name eng) skill])]
+          (println (format "Setting coef of %d on skill %s for %s"
+                           (if (contains? (:profs eng) skill)
+                             1
+                             0)
+                           skill
+                           (:name eng)))
+          (.setCoefficient constraint
+                           variable
+                           (if (contains? (:profs eng) skill)
+                             1
+                             0)))))
 
+    ;; capacity coefficients
+    (doseq [eng team]
+      (doseq [skill (keys skill-max)]
+        (let [constraint (get capacity-constraints eng)
+              variable (get-in variables [(:name eng) skill])]
+          (.setCoefficient constraint
+                           variable
+                           (if (contains? (:profs eng) skill)
+                             1
+                             0)))))
+
+    ;; Objective is to maximize sum of all available proficiencies
+    (let [objective (.objective solver)]
+      (do-maps (fn [[eng skill variable]]
+                 (println (format "Setting coef to %d for %s on %s"
+                                  (if (contains? (-> team-map eng :profs)
+                                                 skill)
+                                    1
+                                    0)
+                                  eng
+                                  skill))
+                 (.setCoefficient objective
+                                  variable
+                                  (if (contains? (-> team-map eng :profs)
+                                                 skill)
+                                    1
+                                    0)))
+               variables)
+      (.setMaximization objective))
+    (let [solution (.solve solver)]
+      (map-maps (fn [[eng skill variable]]
+                  (.solutionValue variable))
+                variables))
     ))
 
 ;; run the new solver one variable per engineer
