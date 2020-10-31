@@ -18,7 +18,7 @@
   {:constants {:sprints   1
                :unplanned 0
                :velocity  10} ; So contrib of 1 = 10 total capacity
-   :profs     {:pierre #{:app :web}
+   :profs     {:pierre #{:app :web :android}
                :ana #{:app :ios}}
    :contrib   [{:pierre 1
                 :ana 1}]
@@ -82,7 +82,7 @@
                           (fn [_]
                             (f path))))))))
 
-(defn variable-name
+(defn constraint-name
   [eng skill]
   (format "%s-%s" eng skill))
 
@@ -91,170 +91,98 @@
 
   Looks like the following:
   {:abe {:ios [variable] :app [variable]}
-   :jen {:ios [variable] :app [variable]}}"
-  [solver eng-names skills team-mapbyname]
-  (zipmap eng-names
-          (map (fn [eng-name]
-                 (zipmap skills
-                         (map (fn [skill]
-                                (.makeNumVar solver
-                                             0.0
-                                             (get-in team-mapbyname
-                                                     [eng-name :capacity])
-                                             (variable-name eng-name
-                                                            skill)))
-                              skills)))
-               eng-names)))
+   :jen {:ios [variable] :app [variable]}}
+
+  Does not create variables for which there is no need (no project effort)."
+  [solver team project]
+  (utils/with-lookup [effort-lookup (-> project :effort keys)]
+    (reduce (fn [acc cur]
+              (assoc acc
+                     (:name cur)
+                     (apply assoc {}
+                            (let [profs (filter effort-lookup
+                                                (:profs cur))]
+                              (interleave profs
+                                          (map #(.makeNumVar solver
+                                                             0.0
+                                                             (:capacity cur)
+                                                             (variable-name
+                                                              (:name cur)
+                                                              %))
+                                               profs))))))
+            {}
+            team)))
 
 (let [[backlog iterations] (config/to-models conf)
       team (first iterations)
-      team-map (zipmap (map :name team)
-                       team)
       project (first backlog)
-      skills (apply s/union (map :profs team))
-      skill-max (:effort project)]
+      effort (:effort project)
+      skills (keys effort)]
   (Loader/loadNativeLibraries)
   (let [solver (MPSolver/createSolver "GLOP")
-        eng-names (map :name team)
-        variables (per-eng-skill-vars solver eng-names skills team-map)
-        skill-constraints (zipmap (keys skill-max)
-                                  (map #(.makeConstraint solver
-                                                        0.0
-                                                        (get skill-max %)
-                                                        (name %))
-                                       (keys skill-max)))
-        capacity-constraints (zipmap team
-                                     (map #(.makeConstraint solver
-                                                            0.0
-                                                            (:capacity %)
-                                                            (-> % :name name))
-                                          team))]
-    ;; skill coefficients
-    (doseq [skill (keys skill-max)]
-      (doseq [eng team]
-        (let [constraint (get skill-constraints skill)
-              variable (get-in variables [(:name eng) skill])]
-          (println (format "Setting coef of %d on skill %s for %s"
-                           (if (contains? (:profs eng) skill)
-                             1
-                             0)
-                           skill
-                           (:name eng)))
-          (.setCoefficient constraint
-                           variable
-                           (if (contains? (:profs eng) skill)
-                             1
-                             0)))))
-
-    ;; capacity coefficients
-    (doseq [eng team]
-      (doseq [skill (keys skill-max)]
-        (let [constraint (get capacity-constraints eng)
-              variable (get-in variables [(:name eng) skill])]
-          (.setCoefficient constraint
-                           variable
-                           (if (contains? (:profs eng) skill)
-                             1
-                             0)))))
-
-    ;; Objective is to maximize sum of all available proficiencies
+        variables (per-eng-skill-vars solver team project)
+        skill-constraints (map #(.makeConstraint solver
+                                                 0.0
+                                                 (get effort %)
+                                                 (name %))
+                               skills)
+        capacity-constraints (map #(.makeConstraint solver
+                                                    0.0
+                                                    (:capacity %)
+                                                    (-> % :name name))
+                              team)]
+    (println "\nclear")
+    ;; Set skill coefficients
+    (println "skills")
+    (doseq [constraint skill-constraints]
+      (let [skill (keyword (.name constraint))]
+        (do-maps (fn [[eng-name vskill variable]]
+                   (println (format "Setting coef of %s and %s of const %s to %d"
+                                    eng-name
+                                    vskill
+                                    (.name constraint)
+                                    (if (= skill vskill)
+                                      1
+                                      0)))
+                   (.setCoefficient constraint
+                                    variable
+                                    (if (= vskill skill)
+                                      1
+                                      0)))
+                 variables)))
+    ;; Set the capacity coefficients
+    (println "capacity")
+    (doseq [constraint capacity-constraints]
+      (let [eng-name (keyword (.name constraint))]
+        (do-maps (fn [[veng-name skill variable]]
+                   (println (format "Setting coef of %s and %s of const %s to %d"
+                                    veng-name
+                                    skill
+                                    (.name constraint)
+                                    (if (= veng-name eng-name)
+                                      1
+                                      0)))
+                   (.setCoefficient constraint
+                                    variable
+                                    (if (= veng-name eng-name)
+                                      1
+                                      0)))
+                 variables)))
+    ;; Objective is to maximize sum of all variables
     (let [objective (.objective solver)]
-      (do-maps (fn [[eng skill variable]]
-                 (println (format "Setting coef to %d for %s on %s"
-                                  (if (contains? (-> team-map eng :profs)
-                                                 skill)
-                                    1
-                                    0)
-                                  eng
-                                  skill))
+      (do-maps (fn [[_ _ variable]]
                  (.setCoefficient objective
                                   variable
-                                  (if (contains? (-> team-map eng :profs)
-                                                 skill)
-                                    1
-                                    0)))
+                                  1))
                variables)
       (.setMaximization objective))
-    (let [solution (.solve solver)]
-      (map-maps (fn [[eng skill variable]]
-                  (.solutionValue variable))
-                variables))
-    ))
-
-;; run the new solver one variable per engineer
-;; THIS DOESNT WORK - MUST TRY ONE VARIABLE PER ENG-PROF
-(let [[backlog iterations] (config/to-models conf)
-      team (first iterations)
-      project (first backlog)
-      skills (apply s/union (map :profs team))
-      skill-max (:effort project)
-      ]
-  (Loader/loadNativeLibraries)
-  ;; Add variables
-  (let [solver (MPSolver/createSolver "GLOP")
-        eng-names (map #(name (get % :name)) team)
-        skill-names (map name skills)
-        variables (zipmap eng-names
-                          (map #(.makeNumVar solver
-                                             0.0
-                                             ##Inf
-                                             %)
-                               eng-names))
-        skill-constraints (zipmap skill-names
-                                  (map #(.makeConstraint solver
-                                                         0.0
-                                                         (get skill-max
-                                                              (keyword %))
-                                                         %)
-                                       skill-names))
-        capacity-constraints (zipmap eng-names
-                                     (map
-                                      #(.makeConstraint solver
-                                                        0.0
-                                                        (get % :capacity)
-                                                        (name (get % :name)))
-                                      team))]
-    ;; Set the capacity coefficients
-    (doseq [eng-name eng-names]
-      (let [constraint (get capacity-constraints eng-name)
-            variable (get variables eng-name)]
-        (doseq [in-eng-name eng-names]
-          (.setCoefficient constraint
-                           variable
-                           (if (= eng-name in-eng-name)
-                             1
-                             0)))))
-
-    ;; Set the skill coefficients
-    (doseq [skill-name skill-names]
-      (let [skill-constraint (get skill-constraints skill-name)]
-        (doseq [eng team]
-          (let [variable (get variables (name (:name eng)))
-                prof-lookup (utils/to-lookup (:profs eng))]
-            (.setCoefficient skill-constraint
-                             variable
-                             (if (get prof-lookup (keyword skill-name))
-                               1
-                               0))))))
-    ;; Objective is to maximize the sum of all efforts/spent capacities
-    (let [objective (.objective solver)]
-      (doseq [variable (vals variables)]
-        (.setCoefficient objective variable 1))
-      (.setMaximization objective))
-    (let [solution (.solve solver)
-          varResults (zipmap (map keyword (keys variables))
-                             (map #(.solutionValue %)
-                                  (vals variables)))]
-      varResults)))
-
-;; For just checking things
-(let [[backlog iterations] (config/to-models conf)
-      team (first iterations)]
-  team)
-
-
-;; Add skill-level constraints
-
+    ;; Solve!
+    [(:effort project)
+     team
+     (let [solution (.solve solver)]
+       (map-maps (fn [[eng skill variable]]
+                   (.solutionValue variable))
+                 variables))]))
 
 
 ;; run the original solver
