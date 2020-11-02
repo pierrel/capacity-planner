@@ -1,9 +1,6 @@
 (ns capacity.cp
   (:require [capacity.config :as config]
-            [capacity.core :as core]
-            [capacity.utils :as utils]
-            [capacity.report :as report]
-            [clojure.set :as s])
+            [capacity.utils :as utils])
   (:import [com.google.ortools Loader]
            [com.google.ortools.linearsolver
             MPConstraint
@@ -11,9 +8,9 @@
             MPSolver
             MPVariable]))
 
-;; Use example from https://developers.google.com/optimization/lp/glop
+(Loader/loadNativeLibraries)
 
-(def conf
+(def sample-conf
   ;; Simple set-up to test out or-tools
   {:constants {:sprints   1
                :unplanned 0
@@ -26,30 +23,6 @@
                      :effort {:app 11
                               :web 3
                               :ios 2}}]})
-
-
-(defn do-maps
-  "Performs `dofn` on each path in nested-maps.
-
-  For example, for {:a {:b 1 :c 2} :d 3} does:
-  (dofn [:a :b 1])
-  (dofn [:a :c 2])
-  (dofn [:d 3])"
-  [dofn nested-maps & [path]]
-  (loop [keys-left (keys nested-maps)]
-    (if (not (empty? keys-left))
-      (let [k (first keys-left)
-            v (get nested-maps k)
-            final-path (if (nil? path)
-                         [k]
-                         (conj path k))]
-        (if (map? v)
-          (do
-            (do-maps dofn v final-path)
-            (recur (rest keys-left)))
-          (do
-            (dofn (conj final-path v))
-            (recur (rest keys-left))))))))
 
 (defn map-to-paths
   [nested-maps & [path paths]]
@@ -67,6 +40,18 @@
                  (conj all-paths (conj current-path v)))))
       all-paths)))
 
+(defn do-maps
+  "Performs `dofn` on each path in nested-maps.
+
+  For example, for {:a {:b 1 :c 2} :d 3} does:
+  (dofn [:a :b 1])
+  (dofn [:a :c 2])
+  (dofn [:d 3])"
+  [dofn nested-maps & [path]]
+  (doseq [path (map-to-paths nested-maps)]
+    (dofn path)))
+
+
 (defn map-maps
   "Performs `f` on each leaf (non-map) of `maps` and returns a new map with
   leaves replaced by the results."
@@ -82,7 +67,7 @@
                           (fn [_]
                             (f path))))))))
 
-(defn constraint-name
+(defn named
   [eng skill]
   (format "%s-%s" eng skill))
 
@@ -94,8 +79,8 @@
    :jen {:ios [variable] :app [variable]}}
 
   Does not create variables for which there is no need (no project effort)."
-  [solver team project]
-  (utils/with-lookup [effort-lookup (-> project :effort keys)]
+  [solver team effort]
+  (utils/with-lookup [effort-lookup (keys effort)]
     (reduce (fn [acc cur]
               (assoc acc
                      (:name cur)
@@ -106,44 +91,36 @@
                                           (map #(.makeNumVar solver
                                                              0.0
                                                              (:capacity cur)
-                                                             (variable-name
+                                                             (named
                                                               (:name cur)
                                                               %))
                                                profs))))))
             {}
             team)))
 
-(let [[backlog iterations] (config/to-models conf)
-      team (first iterations)
-      project (first backlog)
-      effort (:effort project)
-      skills (keys effort)]
-  (Loader/loadNativeLibraries)
+(defn solve
+  "Solves for `team` and `effort` by maximizing per-proficiency capacity.
+
+  Result is the change, per proficiency to each engineer:
+  {:pierre {:ios 10 :app 3}
+  :other {:android 3 :app 1}}"
+  [effort team]
   (let [solver (MPSolver/createSolver "GLOP")
-        variables (per-eng-skill-vars solver team project)
+        variables (per-eng-skill-vars solver team effort)
         skill-constraints (map #(.makeConstraint solver
                                                  0.0
                                                  (get effort %)
                                                  (name %))
-                               skills)
+                               (keys effort))
         capacity-constraints (map #(.makeConstraint solver
                                                     0.0
                                                     (:capacity %)
                                                     (-> % :name name))
-                              team)]
-    (println "\nclear")
+                                  team)]
     ;; Set skill coefficients
-    (println "skills")
     (doseq [constraint skill-constraints]
       (let [skill (keyword (.name constraint))]
         (do-maps (fn [[eng-name vskill variable]]
-                   (println (format "Setting coef of %s and %s of const %s to %d"
-                                    eng-name
-                                    vskill
-                                    (.name constraint)
-                                    (if (= skill vskill)
-                                      1
-                                      0)))
                    (.setCoefficient constraint
                                     variable
                                     (if (= vskill skill)
@@ -151,17 +128,9 @@
                                       0)))
                  variables)))
     ;; Set the capacity coefficients
-    (println "capacity")
     (doseq [constraint capacity-constraints]
       (let [eng-name (keyword (.name constraint))]
         (do-maps (fn [[veng-name skill variable]]
-                   (println (format "Setting coef of %s and %s of const %s to %d"
-                                    veng-name
-                                    skill
-                                    (.name constraint)
-                                    (if (= veng-name eng-name)
-                                      1
-                                      0)))
                    (.setCoefficient constraint
                                     variable
                                     (if (= veng-name eng-name)
@@ -177,20 +146,14 @@
                variables)
       (.setMaximization objective))
     ;; Solve!
-    [(:effort project)
-     team
-     (let [solution (.solve solver)]
-       (map-maps (fn [[eng skill variable]]
-                   (.solutionValue variable))
-                 variables))]))
+    (let [solution (.solve solver)]
+      (map-maps (fn [[eng skill variable]]
+                  (.solutionValue variable))
+                variables))))
 
-
-;; run the original solver
-(let [[backlog iterations] (config/to-models conf)
-      [remaining-backlog
-       backlogs
-       backlog-summaries
-       team-summaries] (core/work-backlog-iter backlog iterations)]
-  remaining-backlog)
-
-
+(defn -main [& args]
+  (let [[backlog iterations] (config/to-models sample-conf)
+        team (first iterations)
+        effort (-> backlog first :effort)]
+    (println (solve effort
+                    team))))
