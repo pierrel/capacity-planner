@@ -18,13 +18,21 @@
                (sut/Eng. :ana #{:ios :app} 3)]]
 
              ;; One eng incapable
-             ;;; TODO: need to fix this - ERROR
              [{:pierre {:app 3 :web 4}}
               (sut/Project. :one {:app 10 :web 10 :ios 10})
               [(sut/Eng. :pierre #{:app :web} 10)
                (sut/Eng. :ana #{:android} 10)]]
-             [(sut/Project. :one {:app 2 :web 6 :ios 8})
+             [(sut/Project. :one {:app 7 :web 6 :ios 10})
               [(sut/Eng. :pierre #{:app :web} 3)
+               (sut/Eng. :ana #{:android} 10)]]
+
+             ;; No eng capable
+             [{}
+              (sut/Project. :one {:app 10 :web 10 :ios 10})
+              [(sut/Eng. :pierre #{:android} 10)
+               (sut/Eng. :ana #{:android} 10)]]
+             [(sut/Project. :one {:app 10 :web 10 :ios 10})
+              [(sut/Eng. :pierre #{:android} 10)
                (sut/Eng. :ana #{:android} 10)]]))
 
 (t/deftest capacity-to-points

@@ -48,8 +48,9 @@
      (map #(assoc %
                   :capacity
                   (- (:capacity %)
-                     (get capacity-change
-                          (:name %))))
+                     (or (get capacity-change
+                              (:name %))
+                         0)))
           team)]))
 
 (defrecord Project [name effort]
