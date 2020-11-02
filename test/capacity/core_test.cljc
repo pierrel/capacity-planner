@@ -128,25 +128,27 @@
         brolly (sut/Eng. :brolly #{:app :ios :web} 16)]
     (are-equal sut/work-backlog
                       [[frontback] [jan paul jean]]
-                      [[(assoc frontback :effort {:app 5 :web 5 :ios 0})]
-                       [(assoc jan :capacity 0)
-                        (assoc paul :capacity 0)
-                        (assoc jean :capacity 0)]]
+                      [[(assoc frontback :effort {:app 5.0
+                                                  :web 5.0
+                                                  :ios 0.0})]
+                       [(assoc jan :capacity 0.0)
+                        (assoc paul :capacity 0.0)
+                        (assoc jean :capacity 0.0)]]
 
                       [[frontback justback] [jan paul jean]]
-                      [[(assoc frontback :effort {:app 5 :web 5 :ios 0})
-                        justback]
-                       [(assoc jan :capacity 0)
-                        (assoc paul :capacity 0)
-                        (assoc jean :capacity 0)]]
+                      [[(assoc frontback :effort {:app 5.0 :web 5.0 :ios 0.0})
+                        (assoc justback :effort {:app 3.0})]
+                       [(assoc jan :capacity 0.0)
+                        (assoc paul :capacity 0.0)
+                        (assoc jean :capacity 0.0)]]
 
                       [[frontback justback] [jan paul jean brolly]]
-                      [[(assoc frontback :effort {:app 0 :web 0 :ios 0})
-                        (assoc justback :effort {:app 0})]
-                       [(assoc jan :capacity 0)
-                        (assoc paul :capacity 0)
-                        (assoc jean :capacity 0)
-                        (assoc brolly :capacity 3)]])))
+                      [[(assoc frontback :effort {:app 0.0 :web 0.0 :ios 0.0})
+                        (assoc justback :effort {:app 0.0})]
+                       [(assoc jan :capacity 0.0)
+                        (assoc paul :capacity 0.0)
+                        (assoc jean :capacity 0.0)
+                        (assoc brolly :capacity 3.0)]])))
 
 ;; Finite
 (t/deftest exhausted?
