@@ -5,6 +5,28 @@
   (:use [capacity.test-utils])
   (:import [capacity.core Eng Project Change]))
 
+(t/deftest merge-cp-solution
+  (are-equal sut/merge-cp-solution
+             ;; Golden path
+             [{:pierre {:app 3 :web 4}
+               :ana {:ios 2 :app 5}}
+              (sut/Project. :one {:app 10 :web 10 :ios 10})
+              [(sut/Eng. :pierre #{:app :web} 10)
+               (sut/Eng. :ana #{:ios :app} 10)]]
+             [(sut/Project. :one {:app 2 :web 6 :ios 8})
+              [(sut/Eng. :pierre #{:app :web} 3)
+               (sut/Eng. :ana #{:ios :app} 3)]]
+
+             ;; One eng incapable
+             ;;; TODO: need to fix this - ERROR
+             [{:pierre {:app 3 :web 4}}
+              (sut/Project. :one {:app 10 :web 10 :ios 10})
+              [(sut/Eng. :pierre #{:app :web} 10)
+               (sut/Eng. :ana #{:android} 10)]]
+             [(sut/Project. :one {:app 2 :web 6 :ios 8})
+              [(sut/Eng. :pierre #{:app :web} 3)
+               (sut/Eng. :ana #{:android} 10)]]))
+
 (t/deftest capacity-to-points
   (are-equal sut/capacity-to-points
                     [10 20] [0 10]

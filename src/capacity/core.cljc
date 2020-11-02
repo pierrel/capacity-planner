@@ -1,5 +1,6 @@
 (ns capacity.core
-  (:require [capacity.utils :as utils]))
+  (:require [capacity.utils :as utils]
+            [capacity.cp :as cp]))
 
 (defprotocol Finite
   (exhausted? [x] "Can no longer work or be worked on")
@@ -31,14 +32,33 @@
           [capacity effort]
           effort))
 
+(defn merge-cp-solution
+  "Takes the `solution` output of cp/solve and returns a modified team and
+  project."
+  [solution project team]
+  (let [effort-change (apply (partial merge-with +)
+                             (vals solution))
+        capacity-change (zipmap (keys solution)
+                                (map #(reduce + (vals %))
+                                     (vals solution)))]
+    [(assoc project
+            :effort
+            (merge-with - (:effort project) effort-change))
+     ;; TODO: make less awkward
+     (map #(assoc %
+                  :capacity
+                  (- (:capacity %)
+                     (get capacity-change
+                          (:name %))))
+          team)]))
+
 (defrecord Project [name effort]
   Workable
   (work-out [proj team]
-    (reduce (fn [[proj res-team] eng]
-              (let [[rem-eng rem-proj] (work-on eng proj)]
-                [rem-proj (conj res-team rem-eng)]))
-            [proj []]
-            team))
+    (merge-cp-solution (cp/solve (:effort proj)
+                                 team)
+                       proj
+                       team))
   Finite
   (exhausted? [proj]
     (every? zero? (map last (:effort proj))))

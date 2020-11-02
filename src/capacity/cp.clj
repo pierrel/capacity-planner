@@ -1,6 +1,5 @@
 (ns capacity.cp
-  (:require [capacity.config :as config]
-            [capacity.utils :as utils])
+  (:require [capacity.utils :as utils])
   (:import [com.google.ortools Loader]
            [com.google.ortools.linearsolver
             MPConstraint
@@ -9,20 +8,6 @@
             MPVariable]))
 
 (Loader/loadNativeLibraries)
-
-(def sample-conf
-  ;; Simple set-up to test out or-tools
-  {:constants {:sprints   1
-               :unplanned 0
-               :velocity  10} ; So contrib of 1 = 10 total capacity
-   :profs     {:pierre #{:app :web :android}
-               :ana #{:app :ios}}
-   :contrib   [{:pierre 1
-                :ana 1}]
-   :projects  [{:name   "Athena"
-                     :effort {:app 11
-                              :web 3
-                              :ios 2}}]})
 
 (defn map-to-paths
   [nested-maps & [path paths]]
@@ -82,11 +67,11 @@
   [solver team effort]
   (utils/with-lookup [effort-lookup (keys effort)]
     (reduce (fn [acc cur]
-              (assoc acc
-                     (:name cur)
-                     (apply assoc {}
-                            (let [profs (filter effort-lookup
-                                                (:profs cur))]
+              (if-let [profs (seq (filter effort-lookup
+                                          (:profs cur)))]
+                (assoc acc
+                       (:name cur)
+                       (apply assoc {}
                               (interleave profs
                                           (map #(.makeNumVar solver
                                                              0.0
@@ -94,7 +79,8 @@
                                                              (named
                                                               (:name cur)
                                                               %))
-                                               profs))))))
+                                               profs))))
+                acc))
             {}
             team)))
 
@@ -150,10 +136,3 @@
       (map-maps (fn [[eng skill variable]]
                   (.solutionValue variable))
                 variables))))
-
-(defn -main [& args]
-  (let [[backlog iterations] (config/to-models sample-conf)
-        team (first iterations)
-        effort (-> backlog first :effort)]
-    (println (solve effort
-                    team))))
