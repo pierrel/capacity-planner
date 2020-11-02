@@ -98,26 +98,26 @@
         brolly (sut/Eng. :brolly #{:app :ios :web} 16)]
     (are-equal sut/work-out
                       [proj [jan]]
-                      [(assoc proj :effort {:app 5 :web 10 :ios 5})
-                       [(assoc jan :capacity 0)]]
+                      [(assoc proj :effort {:app 5.0 :web 10.0 :ios 5})
+                       [(assoc jan :capacity 0.0)]]
 
                       [proj [jan paul]]
-                      [(assoc proj :effort {:app 5 :web 5 :ios 5})
-                       [(assoc jan :capacity 0)
-                        (assoc paul :capacity 0)]]
+                      [(assoc proj :effort {:app 5.0 :web 5.0 :ios 5})
+                       [(assoc jan :capacity 0.0)
+                        (assoc paul :capacity 0.0)]]
 
                       [proj [jan paul jean]]
-                      [(assoc proj :effort {:app 5 :web 5 :ios 0})
-                       [(assoc jan :capacity 0)
-                        (assoc paul :capacity 0)
-                        (assoc jean :capacity 0)]]
+                      [(assoc proj :effort {:app 5.0 :web 5.0 :ios 0.0})
+                       [(assoc jan :capacity 0.0)
+                        (assoc paul :capacity 0.0)
+                        (assoc jean :capacity 0.0)]]
 
                       [proj [jan paul jean brolly]]
-                      [(assoc proj :effort {:app 0 :web 0 :ios 0})
-                       [(assoc jan :capacity 0)
-                        (assoc paul :capacity 0)
-                        (assoc jean :capacity 0)
-                        (assoc brolly :capacity 6)]])))
+                      [(assoc proj :effort {:app 0.0 :web 0.0 :ios 0.0})
+                       [(assoc jan :capacity 0.0)
+                        (assoc paul :capacity 0.0)
+                        (assoc jean :capacity 0.0)
+                        (assoc brolly :capacity 6.0)]])))
 
 (t/deftest work-backlog
   (let [frontback (sut/Project. :frontback {:app 10 :web 10 :ios 5})
