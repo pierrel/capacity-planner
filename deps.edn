@@ -3,7 +3,10 @@
   org.clojure/clojurescript {:mvn/version "1.10.773"}
   ring {:mvn/version "1.8.0"}
   hiccup {:mvn/version "1.0.5"}
-  me.raynes/fs {:mvn/version "1.4.6"}}
+  me.raynes/fs {:mvn/version "1.4.6"}
+  com.google.ortools/ortools {:local/root "libs/ortools-java-8.0.8283.jar"}
+  com.google.ortools/ortools-darwin {:local/root
+                                     "libs/ortools-darwin-8.0.8283.jar"}}
  :paths ["src" "resources" "classes"]
 
  :aliases

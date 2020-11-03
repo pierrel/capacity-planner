@@ -5,60 +5,35 @@
   (:use [capacity.test-utils])
   (:import [capacity.core Eng Project Change]))
 
-(t/deftest capacity-to-points
-  (are-equal sut/capacity-to-points
-                    [10 20] [0 10]
-                    [20 5] [15 0]
-                    [10 10] [0 0]
-                    [5 0] [5 0]
-                    [0 2] [0 2]))
+(t/deftest merge-cp-solution
+  (are-equal sut/merge-cp-solution
+             ;; Golden path
+             [{:pierre {:app 3 :web 4}
+               :ana {:ios 2 :app 5}}
+              (sut/Project. :one {:app 10 :web 10 :ios 10})
+              [(sut/Eng. :pierre #{:app :web} 10)
+               (sut/Eng. :ana #{:ios :app} 10)]]
+             [(sut/Project. :one {:app 2 :web 6 :ios 8})
+              [(sut/Eng. :pierre #{:app :web} 3)
+               (sut/Eng. :ana #{:ios :app} 3)]]
 
-(t/deftest capacity-to-effort
-  (t/is (= [2 {:app 0 :web 0}]
-           (sut/capacity-to-effort 18
-                                   {:app 10 :web 6})))
-  (t/is (= [0 {:app 0 :web 4}]
-           (sut/capacity-to-effort 20
-                                   {:app 10 :web 14})))
-  (t/is (= [0 {:app 10 :web 5}]
-           (sut/capacity-to-effort 0
-                                   {:app 10 :web 5}))))
+             ;; One eng incapable
+             [{:pierre {:app 3 :web 4}}
+              (sut/Project. :one {:app 10 :web 10 :ios 10})
+              [(sut/Eng. :pierre #{:app :web} 10)
+               (sut/Eng. :ana #{:android} 10)]]
+             [(sut/Project. :one {:app 7 :web 6 :ios 10})
+              [(sut/Eng. :pierre #{:app :web} 3)
+               (sut/Eng. :ana #{:android} 10)]]
 
-(t/deftest doable
-  (are-equal sut/doable
-                    [(sut/Eng. :john #{:app :web} 2)
-                     {:app 10 :web 5}]
-                    {:app 10 :web 5}
-
-                    [(sut/Eng. :peter #{:ios} 3)
-                     {:app 10 :web 5}]
-                    {}
-
-                    [(sut/Eng. :cathy #{:one :two} 200)
-                     {:one 1 :two 2 :three 3}]
-                    {:one 1 :two 2}))
-
-(t/deftest work-on
-  (are-equal sut/work-on
-                    [(sut/Eng. :pierre #{:web :ios} 14)
-                     (sut/Project. :simple {:web 10 :app 20 :ios 4})]
-                    [(sut/Eng. :pierre #{:web :ios} 0)
-                     (sut/Project. :simple {:web 0 :app 20 :ios 0})]
-
-                    [(sut/Eng. :pierre #{:web :ios} 14)
-                     (sut/Project. :simple {:app 20})]
-                    [(sut/Eng. :pierre #{:web :ios} 14)
-                     (Project. :simple {:app 20})]
-
-                    [(sut/Eng. :pierre #{:web :ios} 15)
-                     (Project. :simple {:web 50 :app 20 :ios 4})]
-                    [(sut/Eng. :pierre #{:web :ios} 0)
-                     (Project. :simple {:web 35 :app 20 :ios 4})]
-
-                    [(sut/Eng. :pierre #{:web :ios} 14)
-                     (Project. :simple {:web 10 :ios 4})]
-                    [(sut/Eng. :pierre #{:web :ios} 0)
-                     (Project. :simple {:web 0 :ios 0})]))
+             ;; No eng capable
+             [{}
+              (sut/Project. :one {:app 10 :web 10 :ios 10})
+              [(sut/Eng. :pierre #{:android} 10)
+               (sut/Eng. :ana #{:android} 10)]]
+             [(sut/Project. :one {:app 10 :web 10 :ios 10})
+              [(sut/Eng. :pierre #{:android} 10)
+               (sut/Eng. :ana #{:android} 10)]]))
 
 (t/deftest work-out
   (let [proj (sut/Project. :something {:app 10 :web 10 :ios 5})
@@ -68,26 +43,26 @@
         brolly (sut/Eng. :brolly #{:app :ios :web} 16)]
     (are-equal sut/work-out
                       [proj [jan]]
-                      [(assoc proj :effort {:app 5 :web 10 :ios 5})
-                       [(assoc jan :capacity 0)]]
+                      [(assoc proj :effort {:app 5.0 :web 10.0 :ios 5})
+                       [(assoc jan :capacity 0.0)]]
 
                       [proj [jan paul]]
-                      [(assoc proj :effort {:app 5 :web 5 :ios 5})
-                       [(assoc jan :capacity 0)
-                        (assoc paul :capacity 0)]]
+                      [(assoc proj :effort {:app 5.0 :web 5.0 :ios 5})
+                       [(assoc jan :capacity 0.0)
+                        (assoc paul :capacity 0.0)]]
 
                       [proj [jan paul jean]]
-                      [(assoc proj :effort {:app 5 :web 5 :ios 0})
-                       [(assoc jan :capacity 0)
-                        (assoc paul :capacity 0)
-                        (assoc jean :capacity 0)]]
+                      [(assoc proj :effort {:app 5.0 :web 5.0 :ios 0.0})
+                       [(assoc jan :capacity 0.0)
+                        (assoc paul :capacity 0.0)
+                        (assoc jean :capacity 0.0)]]
 
                       [proj [jan paul jean brolly]]
-                      [(assoc proj :effort {:app 0 :web 0 :ios 0})
-                       [(assoc jan :capacity 0)
-                        (assoc paul :capacity 0)
-                        (assoc jean :capacity 0)
-                        (assoc brolly :capacity 6)]])))
+                      [(assoc proj :effort {:app 0.0 :web 0.0 :ios 0.0})
+                       [(assoc jan :capacity 0.0)
+                        (assoc paul :capacity 0.0)
+                        (assoc jean :capacity 0.0)
+                        (assoc brolly :capacity 6.0)]])))
 
 (t/deftest work-backlog
   (let [frontback (sut/Project. :frontback {:app 10 :web 10 :ios 5})
@@ -98,40 +73,29 @@
         brolly (sut/Eng. :brolly #{:app :ios :web} 16)]
     (are-equal sut/work-backlog
                       [[frontback] [jan paul jean]]
-                      [[(assoc frontback :effort {:app 5 :web 5 :ios 0})]
-                       [(assoc jan :capacity 0)
-                        (assoc paul :capacity 0)
-                        (assoc jean :capacity 0)]]
+                      [[(assoc frontback :effort {:app 5.0
+                                                  :web 5.0
+                                                  :ios 0.0})]
+                       [(assoc jan :capacity 0.0)
+                        (assoc paul :capacity 0.0)
+                        (assoc jean :capacity 0.0)]]
 
                       [[frontback justback] [jan paul jean]]
-                      [[(assoc frontback :effort {:app 5 :web 5 :ios 0})
-                        justback]
-                       [(assoc jan :capacity 0)
-                        (assoc paul :capacity 0)
-                        (assoc jean :capacity 0)]]
+                      [[(assoc frontback :effort {:app 5.0 :web 5.0 :ios 0.0})
+                        (assoc justback :effort {:app 3.0})]
+                       [(assoc jan :capacity 0.0)
+                        (assoc paul :capacity 0.0)
+                        (assoc jean :capacity 0.0)]]
 
                       [[frontback justback] [jan paul jean brolly]]
-                      [[(assoc frontback :effort {:app 0 :web 0 :ios 0})
-                        (assoc justback :effort {:app 0})]
-                       [(assoc jan :capacity 0)
-                        (assoc paul :capacity 0)
-                        (assoc jean :capacity 0)
-                        (assoc brolly :capacity 3)]])))
+                      [[(assoc frontback :effort {:app 0.0 :web 0.0 :ios 0.0})
+                        (assoc justback :effort {:app 0.0})]
+                       [(assoc jan :capacity 0.0)
+                        (assoc paul :capacity 0.0)
+                        (assoc jean :capacity 0.0)
+                        (assoc brolly :capacity 3.0)]])))
 
 ;; Finite
-(t/deftest exhausted?
-  (are-equal sut/exhausted?
-                    [(Project. :some {:app 0 :web 10})]
-                    false
-
-                    [(Project. :ah {:me 0 :web 0})]
-                    true
-
-                    [(Eng. :pierre #{:one :two} 10)]
-                    false
-
-                    [(Eng. :pierre #{:two :one} 0)]
-                    true))
 (t/deftest diff
   (are-equal sut/diff
                     ;; Project
@@ -208,42 +172,42 @@
                       [(Eng. :pierre #{:app :web} 10)
                        (Eng. :jan #{:web} 5)]]]
 
-                    [[(Project. :med {:app 0 :web 0})
-                      (Project. :large {:app 10 :web 15})]
+                    [[(Project. :med {:app 0.0 :web 0.0})
+                      (Project. :large {:app 5.0 :web 20.0})]
                      [[(Project. :med {:app 10 :web 10})
                        (Project. :large {:app 15 :web 20})]
-                      [(Project. :med {:app 0 :web 5})
-                       (Project. :large {:app 15 :web 20})]]
+                      [(Project. :med {:app 0.0 :web 5.0})
+                       (Project. :large {:app 15.0 :web 20.0})]]
                      [(list (Change. :med
                                  true
-                                 {:app -10 :web -5}
-                                 3/4)
+                                 {:app -10.0 :web -5.0}
+                                 0.75)
                             (Change. :large
                                      true
-                                     {:app 0 :web 0}
-                                     0))
+                                     {:app 0.0 :web 0.0}
+                                     0.0))
                       (list (Change. :med
                                      true
-                                     {:app 0 :web -5}
-                                     1)
+                                     {:app 0.0 :web -5.0}
+                                     1.0)
                             (Change. :large
                                      true
-                                     {:app -5 :web -5}
-                                     2/7))]
+                                     {:app -10.0 :web 0.0}
+                                     0.2857142857142857))]
                      [(list (Change. :pierre
                                      true
-                                     {:capacity -10}
-                                     1)
+                                     {:capacity -10.0}
+                                     1.0)
                             (Change. :jan
                                      true
-                                     {:capacity -5}
-                                     1))
+                                     {:capacity -5.0}
+                                     1.0))
                       (list (Change. :pierre
                                      true
-                                     {:capacity -10}
-                                     1)
+                                     {:capacity -10.0}
+                                     1.0)
                             (Change. :jan
                                      true
-                                     {:capacity -5}
-                                     1))]]))
+                                     {:capacity -5.0}
+                                     1.0))]]))
 
