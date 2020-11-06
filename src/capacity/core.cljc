@@ -4,7 +4,8 @@
 
 (defprotocol Finite
   (diff [before after] "Difference between `before` and `after`")
-  (ratio [before after] "Total ratio of what was done between `before` and `after`"))
+  (ratio [before after] "Total ratio of what was done between `before` and `after`")
+  (exhausted? [x] "Returns true if the object can no longer work or be worked on."))
 (defprotocol Workable
   (work-out [x y] "returns [x', y'] the result of `y` working on `x`"))
 (defprotocol Identifiable
@@ -49,6 +50,8 @@
       (if (zero? before-total-effort)
         0
         (- 1 (/ after-total-effort before-total-effort)))))
+  (exhausted? [proj]
+    (every? zero? (vals (:effort proj))))
 
   Identifiable
   (id [x]
@@ -63,6 +66,8 @@
       (if (zero? before-cap)
         0
         (- 1 (/ after-cap before-cap)))))
+  (exhausted? [eng]
+    (zero? (:capacity eng)))
 
   Identifiable
   (id [eng]

@@ -123,6 +123,22 @@
                     [(Eng. :pierre #{} 4)
                      (Eng. :pierre #{} 10)]
                     {:capacity 6}))
+(t/deftest exhausted?
+  (are-equal sut/exhausted?
+             [(Project. :full {:app 10 :web 3})]
+             false
+
+             [(Project. :half {:app 10 :web 0})]
+             false
+
+             [(Project. :done {:app 0 :web 0})]
+             true
+
+             [(Eng. :ready #{} 4)]
+             false
+
+             [(Eng. :done #{} 0)]
+             true))
 
 (sut/summarize-all [(Project. :med {:app 10 :web 10})
                     (Project. :large {:app 15 :web 20})]
