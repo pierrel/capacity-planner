@@ -35,10 +35,13 @@
 (defrecord Project [name effort]
   Workable
   (work-out [proj team]
-    (merge-cp-solution (cp/solve (:effort proj)
-                                 team)
+    (merge-cp-solution (if (exhausted? proj)
+                         {}
+                         (cp/solve (:effort proj)
+                                   team))
                        proj
                        team))
+
   Finite
   (diff [before after]
     (apply (partial merge-with -)
@@ -51,7 +54,7 @@
         0
         (- 1 (/ after-total-effort before-total-effort)))))
   (exhausted? [proj]
-    (every? zero? (vals (:effort proj))))
+    (every? (comp not pos?) (vals (:effort proj))))
 
   Identifiable
   (id [x]
