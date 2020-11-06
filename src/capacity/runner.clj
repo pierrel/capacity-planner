@@ -10,13 +10,10 @@
 
 (defn report-str
   [iteration rmap]
-  (let [rmap-str (into {} (mapv #(vector (first %)
-                                         (s/join ", " (last %)))
-                                rmap))]
-    (str "Iteration " iteration "\n"
-         "Completed " (:completed rmap-str) "\n"
-         "Made progress on " (:progressed rmap-str) "\n"
-         "Left with capacity " (:leftover rmap-str) "\n")))
+  (let [all (concat (:completed rmap) (:progressed rmap))]
+    (format "Iteration %d: %s"
+            iteration
+            (s/join ", " all))))
 
 (defn report
   [iter iter-backlog backlog-summary iter-team team-summary]
@@ -38,20 +35,37 @@
      iterations
      team-summaries]))
 
+(defn report-iterations
+  [backlogs
+   backlog-summaries
+   iterations
+   team-summaries]
+  (format "Iterations:\n%s"
+          (s/join "\n" (map #(apply report %)
+                            (utils/group-interleave (map inc (range))
+                                                    backlogs
+                                                    backlog-summaries
+                                                    iterations
+                                                    team-summaries)))))
+
+(defn report-backlog
+  [backlog]
+  (format "Backlog:\n%s"
+          (s/join "\n" (map :name backlog))))
+
 (defn run-and-report [filename]
   (let [[rem-backlog
          backlogs
          backlog-summaries
          iterations
          team-summaries] (run filename)]
-    (s/join "\n" (map #(apply report %)
-                      (utils/group-interleave (range)
-                                              backlogs
-                                              backlog-summaries
-                                              iterations
-                                              team-summaries)))))
+    (format "%s\n\n%s"
+            (report-backlog (first backlogs))
+            (report-iterations backlogs
+                               backlog-summaries
+                               iterations
+                               team-summaries))))
 
 (defn -main [& args]
-  (println "running")
   (let [file (or (first args) "config.edn")]
     (println (run-and-report file))))
