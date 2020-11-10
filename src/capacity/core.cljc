@@ -109,7 +109,8 @@
           backlog))
 
 (defn work-backlog-iter
-  "Works the backlog over multiple team iterations.
+  "Works the backlog over multiple team iterations until either the backlog or
+  iterations are exhausted.
 
   Returns the remaining backlog (after all team iterations),
           all backlog iterations (starting with the untouched backlog),
