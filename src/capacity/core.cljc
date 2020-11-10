@@ -35,7 +35,8 @@
 (defrecord Project [name effort]
   Workable
   (work-out [proj team]
-    (merge-cp-solution (if (exhausted? proj)
+    (merge-cp-solution (if (or (exhausted? proj)
+                               (every? exhausted? team))
                          {}
                          (cp/solve (:effort proj)
                                    team))
