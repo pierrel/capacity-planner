@@ -138,3 +138,17 @@
                (conj backlog-sums backlog-sum)
                (conj team-sums team-sum)
                (rest rem-teams))))))
+
+(defn work-backlog-entirely
+  "Works the backlog over all team iterations and then continues with the final
+  iteration until the backlog is exhausted.
+
+  Returns the remaining backlog (after all team iterations),
+          all backlog iterations (starting with the untouched backlog),
+          all backlog summaries (after apply the team),
+          all team summaries (after application to the backlog)
+  In that order."
+  [backlog iterations]
+  (work-backlog-iter backlog
+                     (concat iterations
+                             (-> iterations last repeat))))
