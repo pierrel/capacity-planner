@@ -82,7 +82,7 @@
 
                       [[frontback justback] [jan paul jean]]
                       [[(assoc frontback :effort {:app 5.0 :web 5.0 :ios 0.0})
-                        (assoc justback :effort {:app 3.0})]
+                        (assoc justback :effort {:app 3})]
                        [(assoc jan :capacity 0.0)
                         (assoc paul :capacity 0.0)
                         (assoc jean :capacity 0.0)]]
