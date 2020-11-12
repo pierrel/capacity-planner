@@ -21,14 +21,13 @@
                                         backlog-summary
                                         iter-team
                                         team-summary)))
-
 (defn run
   [filename]
   (let [[backlog iterations] (config/to-models filename)
         [remaining-backlog
          backlogs
          backlog-summaries
-         team-summaries] (work-backlog-iter backlog iterations)]
+         team-summaries] (work-backlog-entirely backlog iterations)]
     [remaining-backlog
      backlogs
      backlog-summaries

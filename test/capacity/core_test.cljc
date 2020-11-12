@@ -82,7 +82,7 @@
 
                       [[frontback justback] [jan paul jean]]
                       [[(assoc frontback :effort {:app 5.0 :web 5.0 :ios 0.0})
-                        (assoc justback :effort {:app 3.0})]
+                        (assoc justback :effort {:app 3})]
                        [(assoc jan :capacity 0.0)
                         (assoc paul :capacity 0.0)
                         (assoc jean :capacity 0.0)]]
@@ -181,49 +181,180 @@
 
 (t/deftest work-backlog-iter
   (are-equal sut/work-backlog-iter
-                    [[(Project. :med {:app 10 :web 10})
-                      (Project. :large {:app 15 :web 20})]
-                     [[(Eng. :pierre #{:app :web} 10)
-                       (Eng. :jan #{:web} 5)]
-                      [(Eng. :pierre #{:app :web} 10)
-                       (Eng. :jan #{:web} 5)]]]
+             ;; Incomplete
+             [[(Project. :med {:app 10 :web 10})
+               (Project. :large {:app 15 :web 20})]
+              [[(Eng. :pierre #{:app :web} 10)
+                (Eng. :jan #{:web} 5)]
+               [(Eng. :pierre #{:app :web} 10)
+                (Eng. :jan #{:web} 5)]]]
 
-                    [[(Project. :med {:app 0.0 :web 0.0})
-                      (Project. :large {:app 5.0 :web 20.0})]
-                     [[(Project. :med {:app 10 :web 10})
-                       (Project. :large {:app 15 :web 20})]
-                      [(Project. :med {:app 0.0 :web 5.0})
-                       (Project. :large {:app 15.0 :web 20.0})]]
-                     [(list (Change. :med
-                                 true
-                                 {:app -10.0 :web -5.0}
-                                 0.75)
-                            (Change. :large
-                                     true
-                                     {:app 0.0 :web 0.0}
-                                     0.0))
-                      (list (Change. :med
-                                     true
-                                     {:app 0.0 :web -5.0}
-                                     1.0)
-                            (Change. :large
-                                     true
-                                     {:app -10.0 :web 0.0}
-                                     0.2857142857142857))]
-                     [(list (Change. :pierre
-                                     true
-                                     {:capacity -10.0}
-                                     1.0)
-                            (Change. :jan
-                                     true
-                                     {:capacity -5.0}
-                                     1.0))
-                      (list (Change. :pierre
-                                     true
-                                     {:capacity -10.0}
-                                     1.0)
-                            (Change. :jan
-                                     true
-                                     {:capacity -5.0}
-                                     1.0))]]))
+             [[(Project. :med {:app 0.0 :web 0.0})
+               (Project. :large {:app 5.0 :web 20.0})]
+              [[(Project. :med {:app 10 :web 10})
+                (Project. :large {:app 15 :web 20})]
+               [(Project. :med {:app 0.0 :web 5.0})
+                (Project. :large {:app 15 :web 20})]]
+              [(list (Change. :med
+                              true
+                              {:app -10.0 :web -5.0}
+                              0.75)
+                     (Change. :large
+                              true
+                              {:app 0 :web 0}
+                              0))
+               (list (Change. :med
+                              true
+                              {:app 0.0 :web -5.0}
+                              1.0)
+                     (Change. :large
+                              true
+                              {:app -10.0 :web 0.0}
+                              0.2857142857142857))]
+              [(list (Change. :pierre
+                              true
+                              {:capacity -10.0}
+                              1.0)
+                     (Change. :jan
+                              true
+                              {:capacity -5.0}
+                              1.0))
+               (list (Change. :pierre
+                              true
+                              {:capacity -10.0}
+                              1.0)
+                     (Change. :jan
+                              true
+                              {:capacity -5.0}
+                              1.0))]]
 
+             ;; Complete
+             [[(Project. :med {:app 5 :web 5})
+               (Project. :large {:app 5 :web 5})]
+              [[(Eng. :pierre #{:app :web} 10)
+                (Eng. :jan #{:web} 5)]
+               [(Eng. :pierre #{:app :web} 10)
+                (Eng. :jan #{:web} 5)]]]
+
+             [[(Project. :med {:app 0.0 :web 0.0})
+               (Project. :large {:app 0.0 :web 0.0})]
+              [[(Project. :med {:app 5 :web 5})
+                (Project. :large {:app 5 :web 5})]
+               [(Project. :med {:app 0.0 :web 0.0})
+                (Project. :large {:app 0.0 :web 5.0})]]
+              [(list (Change. :med
+                              true
+                              {:app -5.0 :web -5.0}
+                              1.0)
+                     (Change. :large
+                              true
+                              {:app -5.0 :web 0.0}
+                              0.5))
+               (list (Change. :med
+                              true
+                              {:app 0.0 :web 0.0}
+                              1.0)
+                     (Change. :large
+                              true
+                              {:app 0.0 :web -5.0}
+                              1.0))]
+              [(list (Change. :pierre
+                              true
+                              {:capacity -10.0}
+                              1.0)
+                     (Change. :jan
+                              true
+                              {:capacity -5.0}
+                              1.0))
+               (list (Change. :pierre
+                              true
+                              {:capacity 0.0}
+                              0.0)
+                     (Change. :jan
+                              true
+                              {:capacity -5.0}
+                              1.0))]]))
+
+(t/deftest work-backlog-entirely
+  (are-equal sut/work-backlog-entirely
+             [[(Project. :med {:app 10 :web 10})
+               (Project. :large {:app 15 :web 20})]
+              [[(Eng. :pierre #{:app :web} 10)
+                (Eng. :jan #{:web} 5)]
+               [(Eng. :pierre #{:app :web} 10)
+                (Eng. :jan #{:web} 5)]]]
+
+             [[(Project. :med {:app 0.0 :web 0.0})
+               (Project. :large {:app 0.0 :web 0.0})]
+              [[(Project. :med {:app 10 :web 10})
+                (Project. :large {:app 15 :web 20})]
+               [(Project. :med {:app 0.0 :web 5.0})
+                (Project. :large {:app 15 :web 20})]
+               [(Project. :med {:app 0.0 :web 0.0})
+                (Project. :large {:app 5.0 :web 20.0})]
+               [(Project. :med {:app 0.0 :web 0.0})
+                (Project. :large {:app 5.0 :web 5.0})]] ;; BUG: the last backlog should not have anything
+              [(list (Change. :med
+                              true
+                              {:app -10.0 :web -5.0}
+                              0.75)
+                     (Change. :large
+                              true
+                              {:app 0 :web 0}
+                              0))
+               (list (Change. :med
+                              true
+                              {:app 0.0 :web -5.0}
+                              1.0)
+                     (Change. :large
+                              true
+                              {:app -10.0 :web 0.0}
+                              0.2857142857142857))
+               (list (Change. :med
+                              true
+                              {:app 0.0 :web 0.0}
+                              1.0)
+                     (Change. :large
+                              true
+                              {:app 0.0 :web -15.0}
+                              0.7142857142857143))
+               (list (Change. :med
+                              true
+                              {:app 0.0 :web 0.0}
+                              1.0)
+                     (Change. :large
+                              true
+                              {:app -5.0 :web -5.0}
+                              1.0))]
+              [(list (Change. :pierre
+                              true
+                              {:capacity -10.0}
+                              1.0)
+                     (Change. :jan
+                              true
+                              {:capacity -5.0}
+                              1.0))
+               (list (Change. :pierre
+                              true
+                              {:capacity -10.0}
+                              1.0)
+                     (Change. :jan
+                              true
+                              {:capacity -5.0}
+                              1.0))
+               (list (Change. :pierre
+                              true
+                              {:capacity -10.0}
+                              1.0)
+                     (Change. :jan
+                              true
+                              {:capacity -5.0}
+                              1.0))
+               (list (Change. :pierre
+                              true
+                              {:capacity -5.0}
+                              0.5)
+                     (Change. :jan
+                              true
+                              {:capacity -5.0}
+                              1.0))]]))

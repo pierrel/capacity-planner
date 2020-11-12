@@ -35,7 +35,8 @@
 (defrecord Project [name effort]
   Workable
   (work-out [proj team]
-    (merge-cp-solution (if (exhausted? proj)
+    (merge-cp-solution (if (or (exhausted? proj)
+                               (every? exhausted? team))
                          {}
                          (cp/solve (:effort proj)
                                    team))
@@ -108,21 +109,46 @@
           backlog))
 
 (defn work-backlog-iter
-  "Works the backlog over multiple team iterations.
+  "Works the backlog over multiple team iterations until either the backlog or
+  iterations are exhausted.
 
   Returns the remaining backlog (after all team iterations),
-          all backlogs (starting with the untouched backlog),
+          all backlog iterations (starting with the untouched backlog),
           all backlog summaries (after apply the team),
-          all team summaries (after applying to the backlog)
+          all team summaries (after application to the backlog)
   In that order."
   [backlog iterations]
-  (reduce (fn [[rem-backlog backlogs backlog-sums team-sums] team]
-            (let [[res-backlog res-team] (work-backlog rem-backlog team)
-                  backlog-sum (summarize-all rem-backlog res-backlog backlog)
-                  team-sum (summarize-all team res-team team)]
-              [res-backlog
+  (loop [rem-backlog backlog
+         backlogs []
+         backlog-sums []
+         team-sums []
+         rem-teams iterations]
+    (if (or (empty? rem-teams) ;; TODO: Not sure if this is correct. May need 1 more iteration
+            (every? exhausted? rem-backlog))
+      [rem-backlog
+       backlogs
+       backlog-sums
+       team-sums]
+      (let [team (first rem-teams)
+            [res-backlog res-team] (work-backlog rem-backlog team)
+            backlog-sum (summarize-all rem-backlog res-backlog backlog)
+            team-sum (summarize-all team res-team team)]
+        (recur res-backlog
                (conj backlogs rem-backlog)
                (conj backlog-sums backlog-sum)
-               (conj team-sums team-sum)]))
-          [backlog [] [] []]
-          iterations))
+               (conj team-sums team-sum)
+               (rest rem-teams))))))
+
+(defn work-backlog-entirely
+  "Works the backlog over all team iterations and then continues with the final
+  iteration until the backlog is exhausted.
+
+  Returns the remaining backlog (after all team iterations),
+          all backlog iterations (starting with the untouched backlog),
+          all backlog summaries (after apply the team),
+          all team summaries (after application to the backlog)
+  In that order."
+  [backlog iterations]
+  (work-backlog-iter backlog
+                     (concat iterations
+                             (-> iterations last repeat))))
