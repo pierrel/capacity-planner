@@ -112,27 +112,24 @@
   "Works the backlog over multiple team iterations until either the backlog or
   iterations are exhausted.
 
-  Returns the remaining backlog (after all team iterations),
-          all backlog iterations (starting with the untouched backlog),
-          all backlog summaries (after apply the team),
-          all team summaries (after application to the backlog)
+  Returns all backlog iterations (starting with the untouched backlog),
+          all used team iterations
+          all team iterations after use
   In that order."
   [backlog iterations]
   (loop [rem-backlog backlog
-         backlogs []
-         backlog-sums []
-         team-sums []
+         backlogs [backlog]
+         resulting-teams [(first iterations)]
          rem-teams iterations]
-    (if (or (empty? rem-teams) ;; TODO: Not sure if this is correct. May need 1 more iteration
-            (every? exhausted? rem-backlog))
-      [rem-backlog
-       backlogs
-       backlog-sums
-       team-sums]
-      (let [team (first rem-teams)
-            [res-backlog res-team] (work-backlog rem-backlog team)
-            backlog-sum (summarize-all rem-backlog res-backlog backlog)
-            team-sum (summarize-all team res-team team)]
+    (let [team (first rem-teams)
+          [res-backlog res-team] (work-backlog rem-backlog team)
+          new-backlogs (conj backlogs res-backlog)
+          new-resulting-teams (conj resulting-teams res-team)
+          ]
+      (if (or (empty? rem-teams)
+              (every? exhausted? rem-backlog))
+        [(conj backlogs res-backlog)
+         ()]
         (recur res-backlog
                (conj backlogs rem-backlog)
                (conj backlog-sums backlog-sum)
