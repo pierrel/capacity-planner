@@ -123,7 +123,7 @@
          backlog-sums []
          team-sums []
          rem-teams iterations]
-    (if (or (empty? rem-teams)
+    (if (or (empty? rem-teams) ;; TODO: Not sure if this is correct. May need 1 more iteration
             (every? exhausted? rem-backlog))
       [rem-backlog
        backlogs

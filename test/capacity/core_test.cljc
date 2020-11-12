@@ -293,7 +293,7 @@
                [(Project. :med {:app 0.0 :web 0.0})
                 (Project. :large {:app 5.0 :web 20.0})]
                [(Project. :med {:app 0.0 :web 0.0})
-                (Project. :large {:app 5.0 :web 5.0})]]
+                (Project. :large {:app 5.0 :web 5.0})]] ;; BUG: the last backlog should not have anything
               [(list (Change. :med
                               true
                               {:app -10.0 :web -5.0}
