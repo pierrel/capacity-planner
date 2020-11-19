@@ -113,27 +113,24 @@
   iterations are exhausted.
 
   Returns all backlog iterations (starting with the untouched backlog),
-          all used team iterations
-          all team iterations after use
+          all used team iterations before use
+          all used team iterations after use
   In that order."
   [backlog iterations]
   (loop [rem-backlog backlog
          backlogs [backlog]
-         resulting-teams [(first iterations)]
+         teams-before []
+         teams-after []
          rem-teams iterations]
-    (let [team (first rem-teams)
-          [res-backlog res-team] (work-backlog rem-backlog team)
-          new-backlogs (conj backlogs res-backlog)
-          new-resulting-teams (conj resulting-teams res-team)
-          ]
-      (if (or (empty? rem-teams)
-              (every? exhausted? rem-backlog))
-        [(conj backlogs res-backlog)
-         ()]
+    (if (or (empty? rem-teams)
+            (every? exhausted? rem-backlog))
+      [backlogs teams-before teams-after]
+      (let [team-before (first rem-teams)
+            [res-backlog team-after] (work-backlog rem-backlog team-before)]
         (recur res-backlog
-               (conj backlogs rem-backlog)
-               (conj backlog-sums backlog-sum)
-               (conj team-sums team-sum)
+               (conj backlogs res-backlog)
+               (conj teams-before team-before)
+               (conj teams-after team-after)
                (rest rem-teams))))))
 
 (defn work-backlog-entirely
