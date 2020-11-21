@@ -28,7 +28,7 @@ The config file has a few parts: constants, proficiencies, contributions, and pr
 ### Runner
 You can run it using the runner file:
 ```
-$ clj -m capacity.runner my-config.edn
+$ ./scripts/run my-config.edn
 ```
 ## Web
 *Still under development - stick to the CLI for now*
