@@ -3,7 +3,6 @@
             [capacity.utils :as utils]
             [capacity.config :as config]
             [capacity.core :as core]
-            [capacity.report :as report]
             [clojure.set :as st]
             [clojure.string :as s]
             [clojure.edn :as edn]))

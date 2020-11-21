@@ -31,7 +31,7 @@ You can run it using the runner file:
 $ clj -m capacity.runner my-config.edn
 ```
 ## Web
-*Still under construction*
+*Still under development - stick to the CLI for now*
 ### Development
 There are two main files for development: `utils/dev.clj` and `utils/repl.cljs`. I mainly use emacs and cider so most of the variables will be correctly set up in `.dir-locals.el`.
 

@@ -77,28 +77,6 @@
   (id [eng]
     (:name eng)))
 
-;; name    The identifiable part of the record
-;; check   True or false depending on whether the id matches
-;; diff    The diff of before and after
-;; ratio   Ratio change between after and original
-(defrecord Change [name check diff ratio])
-
-(defn summarize
-  "Returns the Change between the two states and an original."
-  [before after original]
-  (map->Change {:name (id before)
-                :check (apply = (map id [before after original]))
-                :diff (diff before after)
-                :ratio (ratio original after)}))
-
-(defn summarize-all
-  "Returns a summary of the changes between two states and an original.
-
-  Takes 3 lists of Identifiable Finite records and returns a Change for each."
-  [befores afters originals]
-  (map (partial apply summarize)
-       (utils/group-interleave befores afters originals)))
-
 (defn work-backlog
   "Returns [backlog', team'] of the backlog and team after working"
   [backlog team]
@@ -112,31 +90,25 @@
   "Works the backlog over multiple team iterations until either the backlog or
   iterations are exhausted.
 
-  Returns the remaining backlog (after all team iterations),
-          all backlog iterations (starting with the untouched backlog),
-          all backlog summaries (after apply the team),
-          all team summaries (after application to the backlog)
+  Returns all backlog iterations (starting with the untouched backlog),
+          all used team iterations before use
+          all used team iterations after use
   In that order."
   [backlog iterations]
   (loop [rem-backlog backlog
-         backlogs []
-         backlog-sums []
-         team-sums []
+         backlogs [backlog]
+         teams-before []
+         teams-after []
          rem-teams iterations]
-    (if (or (empty? rem-teams) ;; TODO: Not sure if this is correct. May need 1 more iteration
+    (if (or (empty? rem-teams)
             (every? exhausted? rem-backlog))
-      [rem-backlog
-       backlogs
-       backlog-sums
-       team-sums]
-      (let [team (first rem-teams)
-            [res-backlog res-team] (work-backlog rem-backlog team)
-            backlog-sum (summarize-all rem-backlog res-backlog backlog)
-            team-sum (summarize-all team res-team team)]
+      [backlogs teams-before teams-after]
+      (let [team-before (first rem-teams)
+            [res-backlog team-after] (work-backlog rem-backlog team-before)]
         (recur res-backlog
-               (conj backlogs rem-backlog)
-               (conj backlog-sums backlog-sum)
-               (conj team-sums team-sum)
+               (conj backlogs res-backlog)
+               (conj teams-before team-before)
+               (conj teams-after team-after)
                (rest rem-teams))))))
 
 (defn work-backlog-entirely
