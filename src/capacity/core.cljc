@@ -77,28 +77,6 @@
   (id [eng]
     (:name eng)))
 
-;; name    The identifiable part of the record
-;; check   True or false depending on whether the id matches
-;; diff    The diff of before and after
-;; ratio   Ratio change between after and original
-(defrecord Change [name check diff ratio])
-
-(defn summarize
-  "Returns the Change between the two states and an original."
-  [before after original]
-  (map->Change {:name (id before)
-                :check (apply = (map id [before after original]))
-                :diff (diff before after)
-                :ratio (ratio original after)}))
-
-(defn summarize-all
-  "Returns a summary of the changes between two states and an original.
-
-  Takes 3 lists of Identifiable Finite records and returns a Change for each."
-  [befores afters originals]
-  (map (partial apply summarize)
-       (utils/group-interleave befores afters originals)))
-
 (defn work-backlog
   "Returns [backlog', team'] of the backlog and team after working"
   [backlog team]
