@@ -189,17 +189,43 @@
                [(Eng. :pierre #{:app :web} 10)
                 (Eng. :jan #{:web} 5)]]]
 
-            []
+             [[[(Project. :med {:app 10 :web 10})
+                (Project. :large {:app 15 :web 20})]
+               [(Project. :med {:app 0.0 :web 5.0})
+                (Project. :large {:app 15 :web 20})]
+               [(Project. :med {:app 0.0 :web 0.0})
+                (Project. :large {:app 5.0 :web 20.0})]]
+              [[(Eng. :pierre #{:app :web} 10)
+                (Eng. :jan #{:web} 5)]
+               [(Eng. :pierre #{:app :web} 10)
+                (Eng. :jan #{:web} 5)]]
+              [[(Eng. :pierre #{:app :web} 0.0)
+                (Eng. :jan #{:web} 0.0)]
+               [(Eng. :pierre #{:app :web} 0.0)
+                (Eng. :jan #{:web} 0.0)]]]
 
              ;; Complete
              [[(Project. :med {:app 5 :web 5})
-               (Project. :large {:app 5 :web 5})]
+               (Project. :same {:app 5 :web 5})]
               [[(Eng. :pierre #{:app :web} 10)
                 (Eng. :jan #{:web} 5)]
                [(Eng. :pierre #{:app :web} 10)
                 (Eng. :jan #{:web} 5)]]]
 
-             []))
+             [[[(Project. :med {:app 5 :web 5})
+                (Project. :same {:app 5 :web 5})]
+               [(Project. :med {:app 0.0 :web 0.0})
+                (Project. :same {:app 0.0 :web 5.0})]
+               [(Project. :med {:app 0.0 :web 0.0})
+                (Project. :same {:app 0.0 :web 0.0})]]
+              [[(Eng. :pierre #{:app :web} 10)
+                (Eng. :jan #{:web} 5)]
+               [(Eng. :pierre #{:app :web} 10)
+                (Eng. :jan #{:web} 5)]]
+              [[(Eng. :pierre #{:app :web} 0.0)
+                (Eng. :jan #{:web} 0.0)]
+               [(Eng. :pierre #{:app :web} 10.0)
+                (Eng. :jan #{:web} 0.0)]]]))
 
 (t/deftest work-backlog-entirely
   (are-equal sut/work-backlog-entirely
@@ -207,7 +233,40 @@
                (Project. :large {:app 15 :web 20})]
               [[(Eng. :pierre #{:app :web} 10)
                 (Eng. :jan #{:web} 5)]
-               [(Eng. :pierre #{:app :web} 10)
+               [(Eng. :pierre #{:app :web} 7)
                 (Eng. :jan #{:web} 5)]]]
 
-             []))
+             [[[(Project. :med {:app 10 :web 10})
+                (Project. :large {:app 15 :web 20})]
+               [(Project. :med {:app 0.0 :web 5.0})
+                (Project. :large {:app 15 :web 20})]
+               [(Project. :med {:app 0.0 :web 0.0})
+                (Project. :large {:app 8.0 :web 20.0})]
+               [(Project. :med {:app 0.0 :web 0.0})
+                (Project. :large {:app 1.0 :web 15.0})]
+               [(Project. :med {:app 0.0 :web 0.0})
+                (Project. :large {:app 1.0 :web 3.0})]
+               [(Project. :med {:app 0.0 :web 0.0})
+                (Project. :large {:app 0.0 :web 0.0})]]
+
+              [[(Eng. :pierre #{:app :web} 10)
+                (Eng. :jan #{:web} 5)]
+               [(Eng. :pierre #{:app :web} 7)
+                (Eng. :jan #{:web} 5)]
+               [(Eng. :pierre #{:app :web} 7)
+                (Eng. :jan #{:web} 5)]
+               [(Eng. :pierre #{:app :web} 7)
+                (Eng. :jan #{:web} 5)]
+               [(Eng. :pierre #{:app :web} 7)
+                (Eng. :jan #{:web} 5)]]
+
+              [[(Eng. :pierre #{:app :web} 0.0)
+                (Eng. :jan #{:web} 0.0)]
+               [(Eng. :pierre #{:app :web} 0.0)
+                (Eng. :jan #{:web} 0.0)]
+               [(Eng. :pierre #{:app :web} 0.0)
+                (Eng. :jan #{:web} 0.0)]
+               [(Eng. :pierre #{:app :web} 0.0)
+                (Eng. :jan #{:web} 0.0)]
+               [(Eng. :pierre #{:app :web} 6.0)
+                (Eng. :jan #{:web} 2.0)]]]))
