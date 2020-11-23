@@ -67,9 +67,9 @@
                             (utils/group-interleave backlogs
                                                     (rest backlogs)))
         changes-strs (map (partial apply report-change)
-                         (utils/group-interleave (range)
-                                                 (repeat backlog-lookup)
-                                                 after-backlogs))
+                          (utils/group-interleave (map inc (range))
+                                                  (repeat backlog-lookup)
+                                                  after-backlogs))
         final-str (format (if (every? exhausted? (last backlogs))
                             "Backlog complete after %d iterations."
                             "Backlog incomplete after %d iteration.")
