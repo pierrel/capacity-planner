@@ -6,6 +6,11 @@
         [clojure.pprint])
   (:import [capacity.core Eng Project]))
 
+(defn project-lookup
+  "Takes a collection of projects and returns a map, keyed by id."
+  [coll]
+  (zipmap (map id coll) coll))
+
 (defn agg-completion
   "Takes 2 efforts and returns the total percent completion."
   [total current]
@@ -33,21 +38,22 @@
                               [original-project current-project]))))))
 
 (defn report-change
-  [iteration original-backlog current-backlog]
+  [iteration backlog-lookup current-backlog]
   (let [all (map (partial apply completion-str)
-                 (utils/group-interleave original-backlog
-                                         current-backlog))]
+                 (map #(list (get backlog-lookup (id %))
+                             %)
+                      current-backlog))]
     (format "Iteration %d: %s"
             iteration
             (s/join ", " all))))
 
 (defn report-changes
   [backlogs]
-  (let [original-backlog (first backlogs)
+  (let [backlog-lookup (-> backlogs first project-lookup)
         after-backlogs (rest backlogs)
         changes-strs (map (partial apply report-change)
                          (utils/group-interleave (range)
-                                                 (repeat original-backlog)
+                                                 (repeat backlog-lookup)
                                                  after-backlogs))
         final-str (format (if (every? exhausted? (last backlogs))
                             "Backlog complete after %d iterations."
