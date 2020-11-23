@@ -77,6 +77,7 @@
     (format "%s\n\n%s"
             (s/join "\n" changes-strs)
             final-str)))
+
 (defn run
   [filename]
   (let [[backlog iterations] (config/to-models filename)]
