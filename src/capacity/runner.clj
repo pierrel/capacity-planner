@@ -37,6 +37,19 @@
                          (map :effort
                               [original-project current-project]))))))
 
+(defn progressed?
+  [before after]
+  (not (= (apply + (vals (:effort before)))
+          (apply + (vals (:effort after))))))
+
+(defn only-progressed
+  "Returns `after-backlog` filtering out projects that did not change."
+  [before-backlog after-backlog]
+  (map last
+       (filter (partial apply progressed?)
+               (utils/group-interleave before-backlog
+                                       after-backlog))))
+
 (defn report-change
   [iteration backlog-lookup current-backlog]
   (let [all (map (partial apply completion-str)
@@ -50,7 +63,9 @@
 (defn report-changes
   [backlogs]
   (let [backlog-lookup (-> backlogs first project-lookup)
-        after-backlogs (rest backlogs)
+        after-backlogs (map (partial apply only-progressed)
+                            (utils/group-interleave backlogs
+                                                    (rest backlogs)))
         changes-strs (map (partial apply report-change)
                          (utils/group-interleave (range)
                                                  (repeat backlog-lookup)
