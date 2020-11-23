@@ -30,7 +30,7 @@
   "Takes 2 projects and returns a string representing their completion."
   [original-project current-project]
   (id-comparison-check original-project current-project)
-  (format "%s (%.0f%%)" ;; TODO figure out how not to show decimal places
+  (format "%s (%.0f%%)"
           (id original-project)
           (* 100 (float
                   (apply agg-completion
