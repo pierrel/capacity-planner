@@ -70,9 +70,10 @@
                           (utils/group-interleave (map inc (range))
                                                   (repeat backlog-lookup)
                                                   after-backlogs))
-        final-str (format (if (every? exhausted? (last backlogs))
-                            "Backlog complete after %d iterations."
-                            "Backlog incomplete after %d iteration.")
+        final-str (format "Backlog %s after %d iterations."
+                          (if (every? exhausted? (last backlogs))
+                            "complete"
+                            "incomplete")
                           (count after-backlogs))]
     (format "%s\n\n%s"
             (s/join "\n" changes-strs)
