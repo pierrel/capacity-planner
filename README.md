@@ -14,11 +14,11 @@ The config file has a few parts: constants, proficiencies, contributions, and pr
              :jenny     #{:app :data}
              :dave      #{:web :app}
              :josephina #{:android :app}}
- :contrib   {:bob        0
-             :kathy      0.4
-             :jenny      1
-             :dave       0.9
-             :josephina  1}
+ :contrib   [{:bob        0
+              :kathy      0.4
+              :jenny      1
+              :dave       0.9
+              :josephina  1}]
  :projects  ({:name   "Athena"
               :effort {:app 32}}
              {:name   "Durian"
